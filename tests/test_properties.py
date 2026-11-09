@@ -13,6 +13,9 @@ from trajcp.conformal import core
 
 ALPHAS = st.sampled_from([0.01, 0.02, 0.05, 0.1, 0.2, 0.25, 0.3, 0.5, 0.9])
 FINITE = {"allow_nan": False, "allow_infinity": False}
+# Rescaling invariance holds to 1e-14 only in the normal floating-point range: dividing
+# subnormal numbers (below about 2e-308) loses most of their significant digits.
+NORMAL_RANGE = st.floats(-1e3, 1e3, **FINITE).filter(lambda x: x == 0.0 or abs(x) >= 1e-100)
 SCORES = hnp.arrays(
     np.float64,
     st.integers(1, 60),
@@ -35,7 +38,7 @@ def test_calibration_set_inclusion(scores: np.ndarray, alpha: float) -> None:
 @given(
     st.integers(1, 12).flatmap(
         lambda n: st.tuples(
-            hnp.arrays(np.float64, (n, 4, 5), elements=st.floats(-1e3, 1e3, **FINITE)),
+            hnp.arrays(np.float64, (n, 4, 5), elements=NORMAL_RANGE),
             hnp.arrays(np.float64, (n, 4, 5), elements=st.floats(1e-3, 1e3, **FINITE)),
         )
     ),
