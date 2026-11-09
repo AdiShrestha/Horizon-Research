@@ -19,7 +19,24 @@ Early development. Code is added in stages, starting with the calibration core, 
 
 ## Software
 
-Python 3.12. Emulators are trained with PyTorch (eager mode; Apple-silicon GPUs supported). Reference solutions are computed with JAX on the CPU in double precision. All calibration arithmetic runs in double precision on the CPU. Setup instructions will be added with the first package release.
+Python 3.12. Emulators are trained with PyTorch (eager mode; Apple-silicon GPUs supported). Reference solutions are computed with JAX on the CPU in double precision. All calibration arithmetic runs in double precision on the CPU.
+
+## Setup
+
+The environment is managed with [uv](https://docs.astral.sh/uv/) and pinned in `uv.lock` (macOS arm64 and Linux x86-64).
+
+```bash
+uv sync --frozen   # create .venv from uv.lock
+make test          # fast test suite (CPU, float64 core)
+make lint          # ruff, mypy on the conformal core, dtype guard
+```
+
+Conventions the code and tests enforce:
+
+- `src/trajcp/conformal/` works on float64 NumPy arrays on the CPU only. `make lint` rejects `float32`, `.cuda(`, `torch.compile(` and `autocast` in that package.
+- Emulators run in eager float32; `torch.compile` and `torch.autocast` are not used.
+- Python writes no bytecode (the Makefile exports `PYTHONDONTWRITEBYTECODE=1`), and `make test` fails if bytecode is found under `source/`; `make clean-source-bytecode` removes it.
+- `source/requirements.lock` is the hash-pinned dependency list of the registered comparison study; `make export-lock` regenerates it from `uv.lock`, and a test fails if the two disagree.
 
 ## Licence
 

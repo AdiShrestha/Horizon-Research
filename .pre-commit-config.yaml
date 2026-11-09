@@ -1,0 +1,28 @@
+# Local hooks only: every check runs from the project environment (.venv); nothing is fetched.
+# Run with `pre-commit run --all-files` (or `make precommit`).
+repos:
+  - repo: local
+    hooks:
+      - id: ruff
+        name: ruff check
+        entry: .venv/bin/python -B -m ruff check
+        language: system
+        types: [python]
+      - id: ruff-format
+        name: ruff format --check
+        entry: .venv/bin/python -B -m ruff format --check
+        language: system
+        types: [python]
+      - id: mypy-conformal
+        name: mypy (conformal core)
+        entry: .venv/bin/python -B -m mypy
+        language: system
+        files: ^src/trajcp/conformal/
+        types: [python]
+        pass_filenames: false
+      - id: conformal-dtype-guard
+        name: conformal core is float64 and CPU-only
+        entry: .venv/bin/python -B scripts/check_conformal_dtypes.py
+        language: system
+        files: ^src/trajcp/conformal/
+        types: [python]
