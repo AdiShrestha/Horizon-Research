@@ -33,10 +33,10 @@ def _pins_from_pyproject() -> dict[str, str]:
     return pins
 
 
-def _locked_packages() -> dict[str, str]:
-    """Packages of source/requirements.lock that apply to this platform."""
+def _parse_requirements(text: str) -> dict[str, str]:
+    """Pinned name -> version entries of a requirements export that apply to this platform."""
     packages: dict[str, str] = {}
-    for raw in LOCK.read_text(encoding="utf-8").splitlines():
+    for raw in text.splitlines():
         if not raw or raw[0] in " #":
             continue
         entry = raw.rstrip(" \\")
@@ -48,6 +48,37 @@ def _locked_packages() -> dict[str, str]:
         assert len(specs) == 1 and specs[0].operator == "==", entry
         packages[canonicalize_name(requirement.name)] = specs[0].version
     return packages
+
+
+def _locked_packages() -> dict[str, str]:
+    """Packages of source/requirements.lock that apply to this platform."""
+    return _parse_requirements(LOCK.read_text(encoding="utf-8"))
+
+
+def _optional_only_packages(locked: set[str]) -> set[str]:
+    """Packages that only optional extras or non-default dependency groups bring in."""
+    uv = shutil.which("uv")
+    if uv is None:
+        return set()
+    result = subprocess.run(
+        [
+            uv,
+            "export",
+            "--format",
+            "requirements-txt",
+            "--frozen",
+            "--no-emit-project",
+            "--offline",
+            "--no-hashes",
+            "--all-groups",
+            "--all-extras",
+        ],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return set(_parse_requirements(result.stdout)) - locked
 
 
 def test_interpreter_is_python_3_12() -> None:
@@ -83,10 +114,11 @@ def test_environment_equals_the_sub_study_lock() -> None:
         canonicalize_name(dist.metadata["Name"]): dist.version for dist in metadata.distributions()
     }
     installed.pop("trajcp", None)
-    # Optional extras may be installed on a developer machine; the lock covers the default set.
+    # Optional extras and non-default groups may be installed on a developer machine; the lock
+    # covers the default set.
     mismatched = {n: (v, installed.get(n)) for n, v in locked.items() if installed.get(n) != v}
     assert not mismatched, f"installed versions differ from the lock: {mismatched}"
-    unlocked = sorted(set(installed) - set(locked) - {"mlx", "mlx-metal", "xgboost"})
+    unlocked = sorted(set(installed) - set(locked) - _optional_only_packages(set(locked)))
     assert not unlocked, f"installed packages missing from the lock: {unlocked}"
 
 

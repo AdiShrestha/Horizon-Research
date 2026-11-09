@@ -1,5 +1,6 @@
 # Developer shortcuts. Python never writes bytecode here, so source/ stays free of .pyc files.
 export PYTHONDONTWRITEBYTECODE := 1
+export PYTHONPATH := src$(if $(PYTHONPATH),:$(PYTHONPATH),)
 
 UV     ?= uv
 PYTHON ?= .venv/bin/python
@@ -13,14 +14,17 @@ help:
 	@echo "sync                    create or update .venv from uv.lock"
 	@echo "export-lock             regenerate source/requirements.lock from uv.lock"
 	@echo "test                    fast test suite (CPU, float64 core)"
-	@echo "test-nightly            long validation runs (10,000-split simulations)"
+	@echo "test-nightly            full suite: 10,000-split simulations, 2,000 property examples"
 	@echo "lint                    ruff, mypy on the conformal core, dtype guard"
 	@echo "format                  apply ruff formatting"
 	@echo "precommit               run the pre-commit configuration on every file"
 	@echo "clean-source-bytecode   delete __pycache__ and .pyc files under source/"
 
+# macOS can flag files inside .venv as hidden, and Python skips hidden .pth files, which
+# silently breaks the editable install; clear the flag after every sync.
 sync:
 	$(UV) sync --frozen
+	@if [ "$$(uname)" = "Darwin" ]; then chflags -R nohidden .venv; fi
 
 # Hash-pinned dependency list of the registered comparison study under source/.
 # Regenerate only after a dependency change, and before that study is frozen.
@@ -31,7 +35,7 @@ test: check-source-bytecode
 	$(PY) -m pytest -m "not nightly"
 
 test-nightly: check-source-bytecode
-	$(PY) -m pytest -m nightly
+	HYPOTHESIS_PROFILE=nightly $(PY) -m pytest
 
 lint: dtype-guard
 	$(PY) -m ruff check $(CODE)

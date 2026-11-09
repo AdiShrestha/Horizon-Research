@@ -53,6 +53,11 @@ tooling = [
   "pylatexenc==2.11",
   "pypdf==6.21.2",
 ]
+# Third-party conformal library used only as a test oracle (not part of the default install).
+# puncc 0.9.3 requires numpy<2 and cannot be installed next to the pinned numpy.
+oracles = [
+  "mapie>=1.6",
+]
 
 [tool.hatch.version]
 path = "src/trajcp/__init__.py"
@@ -91,8 +96,13 @@ files = ["src/trajcp/conformal"]
 strict = true
 warn_unused_ignores = true
 
+[[tool.mypy.overrides]]
+module = ["scipy.*"]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["src"]
 addopts = "-ra --strict-markers --strict-config"
 markers = [
   "nightly: long-running validation (for example the 10,000-split coverage simulations)",
