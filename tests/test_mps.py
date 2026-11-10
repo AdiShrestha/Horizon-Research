@@ -148,3 +148,28 @@ def test_spectral_layer_training_matches_the_cpu_reference() -> None:
     result = measure_training_parity()
     assert result["first_step_relative_gradient_error"] < 1e-5, result
     assert result["max_relative_loss_difference"] < 1e-3, result
+
+
+def test_spectral_1d_layer_matches_an_explicit_dft_on_the_cpu() -> None:
+    from trajcp.emulators.fno import SpectralConv1d
+
+    torch.manual_seed(0)
+    layer = SpectralConv1d(2, 3, 4)
+    layer.weights.data = layer.weights.data.to(torch.complex128)
+    x = torch.randn(2, 2, 11, dtype=torch.float64)
+    out = np.zeros((2, 3, 6), dtype=np.complex128)
+    out[:, :, :4] = np.einsum(
+        "bix,iox->box", np.fft.rfft(x.numpy())[:, :, :4], layer.weights.detach().numpy()
+    )
+    expected = np.fft.irfft(out, n=11)
+    np.testing.assert_allclose(layer(x).detach().numpy(), expected, rtol=1e-12, atol=1e-14)
+
+
+@pytest.mark.parametrize(("dim", "grid"), [(1, (256,)), (2, (32, 32))])
+def test_fno_maps_the_grid_to_itself(dim: int, grid: tuple[int, ...]) -> None:
+    from trajcp.emulators.fno import FNO
+
+    model = FNO(dim, in_channels=2, out_channels=1, width=8, modes=4, layers=2)
+    out = model(torch.randn(3, 2, *grid))
+    assert out.shape == (3, 1, *grid)
+    assert torch.isfinite(out).all()

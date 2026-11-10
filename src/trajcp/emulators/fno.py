@@ -20,6 +20,29 @@ def complex_dtype_for(real_dtype: torch.dtype) -> torch.dtype:
     raise ValueError(f"unsupported real dtype {real_dtype}")
 
 
+class SpectralConv1d(nn.Module):
+    """Fourier layer on (batch, channels, N) real input with ``modes`` kept modes."""
+
+    def __init__(self, in_channels: int, out_channels: int, modes: int) -> None:
+        super().__init__()
+        self.out_channels = out_channels
+        self.modes = modes
+        scale = 1.0 / (in_channels * out_channels)
+        shape = (in_channels, out_channels, modes)
+        self.weights = nn.Parameter(scale * torch.randn(shape, dtype=torch.complex64))
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        batch, _, size = x.shape
+        spectrum = torch.fft.rfft(x)
+        out = torch.zeros(
+            batch, self.out_channels, size // 2 + 1, dtype=spectrum.dtype, device=x.device
+        )
+        out[:, :, : self.modes] = torch.einsum(
+            "bix,iox->box", spectrum[:, :, : self.modes], self.weights
+        )
+        return torch.fft.irfft(out, n=size)
+
+
 class SpectralConv2d(nn.Module):
     """Fourier layer on (batch, channels, H, W) real input with ``modes1 x modes2`` kept modes."""
 
@@ -48,3 +71,44 @@ class SpectralConv2d(nn.Module):
             "bixy,ioxy->boxy", spectrum[:, :, -m1:, :m2], self.weights2
         )
         return torch.fft.irfft2(out, s=(height, width))
+
+
+class FNO(nn.Module):
+    """Fourier neural operator in 1D or 2D: pointwise lift, ``layers`` Fourier blocks with a
+    pointwise skip and GELU, pointwise projection. Input (batch, in_channels, *grid)."""
+
+    def __init__(
+        self,
+        dim: int,
+        in_channels: int,
+        out_channels: int,
+        width: int,
+        modes: int,
+        layers: int = 4,
+        projection: int = 128,
+    ) -> None:
+        super().__init__()
+        if dim not in (1, 2):
+            raise ValueError("dim must be 1 or 2")
+        conv = nn.Conv1d if dim == 1 else nn.Conv2d
+        self.lift = conv(in_channels, width, 1)
+        self.spectral = nn.ModuleList(
+            SpectralConv1d(width, width, modes)
+            if dim == 1
+            else SpectralConv2d(width, width, modes, modes)
+            for _ in range(layers)
+        )
+        self.pointwise = nn.ModuleList(conv(width, width, 1) for _ in range(layers))
+        self.project = nn.Sequential(
+            conv(width, projection, 1), nn.GELU(), conv(projection, out_channels, 1)
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        h = self.lift(x)
+        last = len(self.spectral) - 1
+        blocks = zip(self.spectral, self.pointwise, strict=True)
+        for i, (spectral, pointwise) in enumerate(blocks):
+            h = spectral(h) + pointwise(h)
+            if i < last:
+                h = nn.functional.gelu(h)
+        return self.project(h)
