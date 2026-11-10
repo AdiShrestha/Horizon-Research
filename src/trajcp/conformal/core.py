@@ -40,6 +40,7 @@ __all__ = [
     "horizon_thresholds",
     "infinite_cell_fraction",
     "kish_ess",
+    "lp_time_profile",
     "lp_time_weights",
     "nan_to_inf",
     "normalized_residuals",
@@ -309,6 +310,13 @@ def lp_time_weights(r: npt.ArrayLike, a_min: float = 1e-6) -> FloatArray:
     if not res.success:
         raise RuntimeError(str(res.message))
     return np.asarray(res.x[:steps], dtype=np.float64)
+
+
+def lp_time_profile(r: npt.ArrayLike, a_min: float = 1e-6) -> FloatArray:
+    """Band profile b_t = 1 / a_t of the LP weights, for ``sup_score_from_steps`` and
+    ``prefix_scores``: the score is max_t m_it / b_t = max_t a_t m_it and the band radius at
+    step t is q * b_t. ``lp_time_weights`` returns the score multipliers a_t instead."""
+    return np.asarray(1.0 / lp_time_weights(r, a_min), dtype=np.float64)
 
 
 # --------------------------------------------------------------------------------------

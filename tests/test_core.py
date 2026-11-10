@@ -245,6 +245,29 @@ def test_lp_recovers_the_exponential_growth_profile() -> None:
     assert true_ratio / 2 <= measured <= true_ratio * 2, f"radius ratio {measured:.2f}"
 
 
+def test_lp_band_profile_scores_like_the_lp_weights() -> None:
+    rng = rng_for(81)
+    stats = rng.standard_exponential((60, 25)) * np.exp(0.05 * np.arange(25))
+    a = core.lp_time_weights(stats)
+    profile = core.lp_time_profile(stats)
+    m = rng.standard_exponential((40, 25))
+    np.testing.assert_allclose(
+        core.sup_score_from_steps(m, profile), (a[None, :] * m).max(axis=1), rtol=1e-12, atol=0.0
+    )
+
+
+def test_lp_band_radius_grows_along_the_true_growth() -> None:
+    steps, n_fit, true_ratio = 100, 300, 20.0
+    growth = math.log(true_ratio) / (steps - 1)
+    rng = rng_for(8)  # same set-up as the LP recovery test
+    scale = rng.lognormal(0.0, 0.5, size=(n_fit, 1))
+    noise = rng.lognormal(0.0, 0.25, size=(n_fit, steps))
+    stats = scale * np.exp(growth * np.arange(steps))[None, :] * noise
+    profile = core.lp_time_profile(stats)  # band radius at step t is q * profile[t]
+    measured = profile[-1] / profile[0]
+    assert true_ratio / 2 <= measured <= true_ratio * 2, f"last/first radius {measured:.2f}"
+
+
 def test_lp_rejects_non_finite_statistics() -> None:
     stats = np.ones((5, 4))
     stats[2, 1] = np.inf

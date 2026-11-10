@@ -18,6 +18,7 @@ constraints = [
     { name = "safetensors", specifier = "==0.8.0" },
     { name = "scikit-learn", specifier = "==1.9.0" },
     { name = "scipy", specifier = "==1.18.0" },
+    { name = "torch", specifier = "==2.15.0" },
 ]
 
 [[package]]

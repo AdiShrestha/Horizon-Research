@@ -23,7 +23,7 @@ help:
 # macOS can flag files inside .venv as hidden, and Python skips hidden .pth files, which
 # silently breaks the editable install; clear the flag after every sync.
 sync:
-	$(UV) sync --frozen
+	$(UV) sync --frozen --group oracles
 	@if [ "$$(uname)" = "Darwin" ]; then chflags -R nohidden .venv; fi
 
 # Hash-pinned dependency list of the registered comparison study under source/.
