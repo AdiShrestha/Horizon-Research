@@ -58,3 +58,17 @@ def test_film_starts_as_identity_and_safetensors_round_trip(tmp_path: Path) -> N
     again.load_state_dict(load_file(str(tmp_path / "m.safetensors")))
     c = torch.randn(3, 1)
     assert torch.equal(film(x, c), again(x, c))
+
+
+def test_rollout_error_summary_sup_and_nonfinite() -> None:
+    from trajcp.emulators.training import rollout_error_summary
+
+    truth = np.ones((3, 10, 4)) * 2.0
+    pred = truth.copy()
+    pred[0, 0, 1] += 0.5
+    pred[2, 9, 0] = np.nan
+    s = rollout_error_summary(pred, truth)
+    assert s["non_finite_trajectories"] == 1
+    assert s["p90_sup"]["1"] > 0.0 and s["median_sup"]["1"] == 0.0
+    assert s["p90_sup_rel"]["1"] <= 0.25
+    assert np.isinf(s["p90_sup"]["10"])

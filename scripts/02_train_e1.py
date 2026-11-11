@@ -8,10 +8,11 @@ Fixed before the first run:
 - Optimizer AdamW (0.9, 0.99), weight decay 1e-4, peak lr 1e-3, 5-epoch linear warm-up, cosine to
   1e-6 at the budget (500 epochs), batch 64, loss = per-sample relative L2 of normalized increments.
 - Validation every 5 epochs on all validation pairs: the same loss (selection metric) and the
-  one-step relative L2 of the predicted state. Selected checkpoint = minimum validation loss.
+  one-step relative L2 of the predicted state (reported). Selection, tail rule and acceptance use
+  the normalized-increment metric. Selected checkpoint = minimum validation loss.
 - Convergence: the two-window tail rule (last two 10% windows differ by < 2%).
 - Acceptance check after training: T-step rollout from the 100 validation initial states, count
-  of non-finite values and relative L2 error over time.
+  of non-finite values; relative L2 and sup-norm error (physical and relative to sup |u_t|).
 Eager float32 on MPS; no compile, no autocast. Atomic checkpoints every 10 epochs and on SIGINT or
 SIGTERM; resumes from <out>/last.pt.
 """
@@ -42,6 +43,9 @@ from trajcp.emulators.training import (  # noqa: E402
     atomic_torch_save,
     learning_rate,
     relative_l2,
+    rollout,
+    rollout_error_summary,
+    step_inputs,
     tail_criterion,
 )
 
@@ -61,22 +65,6 @@ def build_model() -> FNO:
     return FNO(
         1, in_channels=2, out_channels=1, width=WIDTH, modes=MODES, layers=LAYERS, cond_dim=1
     )
-
-
-def step_inputs(
-    u: torch.Tensor, mu: torch.Tensor, norm: Normalization
-) -> tuple[torch.Tensor, torch.Tensor]:
-    """u: (b, N) physical state; mu: (b,) normalized parameter -> network input and FiLM vector."""
-    x = (u - norm.state_mean) / norm.state_sd
-    channel = mu[:, None].expand_as(x)
-    return torch.stack([x, channel], dim=1), mu[:, None]
-
-
-def predict_next(
-    model: FNO, u: torch.Tensor, mu: torch.Tensor, norm: Normalization
-) -> torch.Tensor:
-    x, c = step_inputs(u, mu, norm)
-    return u + norm.increment_sd * model(x, c)[:, 0]
 
 
 @torch.no_grad()
@@ -101,29 +89,10 @@ def validate(
     }
 
 
-@torch.no_grad()
 def rollout_check(
     model: FNO, u: torch.Tensor, mu: torch.Tensor, norm: Normalization
 ) -> dict[str, object]:
-    model.eval()
-    state = u[:, 0]
-    errors = []
-    for t in range(1, u.shape[1]):
-        state = predict_next(model, state, mu, norm)
-        errors.append(relative_l2(state, u[:, t]).cpu().numpy())
-    err = np.stack(errors, axis=1)  # (n, T)
-    finite = np.isfinite(err)
-    marks = [1, 10, 25, 50, 100, 150, 200]
-    return {
-        "trajectories": int(u.shape[0]),
-        "non_finite_trajectories": int((~finite.all(axis=1)).sum()),
-        "median_rel_l2": {
-            str(t): float(np.median(err[:, t - 1])) for t in marks if t <= err.shape[1]
-        },
-        "p90_rel_l2": {
-            str(t): float(np.quantile(err[:, t - 1], 0.9)) for t in marks if t <= err.shape[1]
-        },
-    }
+    return rollout_error_summary(rollout(model, u, mu, norm), u[:, 1:].cpu().numpy())
 
 
 def main() -> None:
@@ -185,15 +154,24 @@ def main() -> None:
         "val_state_rel_l2": [],
         "seconds": [],
     }
+    clock = time.perf_counter()
     best = float("inf")
     start_epoch = 0
+    elapsed_before = 0.0
+    resumes: list[int] = []
     last = args.out / "last.pt"
     if last.exists():
         state = torch.load(last, map_location="cpu", weights_only=False)
         model.load_state_dict(state["model"])
         optimizer.load_state_dict(state["optimizer"])
         curves, best, start_epoch = state["curves"], state["best"], state["epoch"]
+        elapsed_before = state.get("elapsed", 0.0)
+        resumes = [*state.get("resumes", []), start_epoch]
         print(f"resumed at epoch {start_epoch}", flush=True)
+
+    def elapsed() -> float:
+        """Training seconds, cumulative across resumes."""
+        return elapsed_before + time.perf_counter() - clock
 
     def checkpoint(epoch: int) -> None:
         atomic_torch_save(
@@ -203,6 +181,8 @@ def main() -> None:
                 "curves": curves,
                 "best": best,
                 "epoch": epoch,
+                "elapsed": elapsed(),
+                "resumes": resumes,
             },
             last,
         )
@@ -211,7 +191,6 @@ def main() -> None:
     signal.signal(signal.SIGINT, request_stop)
     signal.signal(signal.SIGTERM, request_stop)
     batches = (pairs + BATCH - 1) // BATCH
-    clock = time.perf_counter()
     for epoch in range(start_epoch, args.epochs):
         order = torch.randperm(
             pairs, generator=torch.Generator().manual_seed(args.seed * 100_003 + epoch)
@@ -248,7 +227,7 @@ def main() -> None:
             curves["train_loss"].append(float(total) / batches)
             curves["val_loss"].append(metrics["val_loss"])
             curves["val_state_rel_l2"].append(metrics["val_state_rel_l2"])
-            curves["seconds"].append(time.perf_counter() - clock)
+            curves["seconds"].append(elapsed())
             if not np.isfinite(metrics["val_loss"]):
                 checkpoint(done)
                 raise SystemExit(f"non-finite validation loss at epoch {done}")
@@ -261,7 +240,7 @@ def main() -> None:
                 )
             print(
                 f"epoch {done} train {float(total) / batches:.4e} val {metrics['val_loss']:.4e} "
-                f"state {metrics['val_state_rel_l2']:.3e} {time.perf_counter() - clock:.0f}s",
+                f"state {metrics['val_state_rel_l2']:.3e} {elapsed():.0f}s",
                 flush=True,
             )
         if done % CHECKPOINT_EVERY == 0 or done == args.epochs:
@@ -280,6 +259,8 @@ def main() -> None:
         "tail": tail_criterion(curves["epoch"], curves["val_loss"], args.epochs),
         "rollout": rollout_check(best_model, u_val, mu_val, norm),
         "train_seconds": curves["seconds"][-1],
+        "resumed": len(resumes) > 0,
+        "resume_epochs": resumes,
     }
     (args.out / "report.json").write_text(json.dumps(report, indent=2))
     print(json.dumps(report, indent=2))

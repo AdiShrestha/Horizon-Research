@@ -88,3 +88,66 @@ def atomic_safetensors(module: torch.nn.Module, path: Path, metadata: dict[str, 
     tmp = path.with_suffix(path.suffix + ".tmp")
     save_file(state, str(tmp), metadata=metadata)
     os.replace(tmp, path)
+
+
+ROLLOUT_MARKS = (1, 10, 25, 50, 100, 150, 200)
+
+
+def rollout_error_summary(pred: np.ndarray, truth: np.ndarray) -> dict[str, Any]:
+    """Error summary of rollouts. pred, truth: (n, T, N) predicted and true states for t = 1..T.
+
+    Per step: relative L2, sup-norm error in physical units, and sup-norm error relative to the
+    sup norm of the true u_t; median and 90th percentile over trajectories at ROLLOUT_MARKS.
+    Non-finite errors count as +inf (never dropped); quantiles are order statistics
+    (method 'higher') so that +inf never turns into NaN."""
+    pred64 = np.asarray(pred, dtype=np.float64)
+    truth64 = np.asarray(truth, dtype=np.float64)
+    diff = pred64 - truth64
+    with np.errstate(invalid="ignore", over="ignore"):
+        rel_l2 = np.linalg.norm(diff, axis=2) / np.linalg.norm(truth64, axis=2)
+        sup = np.abs(diff).max(axis=2)
+        sup_rel = sup / np.abs(truth64).max(axis=2)
+    out: dict[str, Any] = {
+        "trajectories": int(pred.shape[0]),
+        "non_finite_trajectories": int((~np.isfinite(diff).all(axis=(1, 2))).sum()),
+    }
+    for name, err in (("rel_l2", rel_l2), ("sup", sup), ("sup_rel", sup_rel)):
+        err = np.where(np.isfinite(err), err, np.inf)
+        marks = [t for t in ROLLOUT_MARKS if t <= err.shape[1]]
+        out[f"median_{name}"] = {
+            str(t): float(np.quantile(err[:, t - 1], 0.5, method="higher")) for t in marks
+        }
+        out[f"p90_{name}"] = {
+            str(t): float(np.quantile(err[:, t - 1], 0.9, method="higher")) for t in marks
+        }
+    return out
+
+
+def step_inputs(
+    u: torch.Tensor, mu: torch.Tensor, norm: Normalization
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """u: (b, N) physical state; mu: (b,) normalized parameter -> network input and FiLM vector."""
+    x = (u - norm.state_mean) / norm.state_sd
+    channel = mu[:, None].expand_as(x)
+    return torch.stack([x, channel], dim=1), mu[:, None]
+
+
+def predict_next(
+    model: torch.nn.Module, u: torch.Tensor, mu: torch.Tensor, norm: Normalization
+) -> torch.Tensor:
+    x, c = step_inputs(u, mu, norm)
+    return u + norm.increment_sd * model(x, c)[:, 0]
+
+
+@torch.no_grad()
+def rollout(
+    model: torch.nn.Module, u: torch.Tensor, mu: torch.Tensor, norm: Normalization
+) -> np.ndarray:
+    """Autoregressive rollout from u[:, 0]; returns predicted states t = 1..T, shape (n, T, N)."""
+    model.eval()
+    state = u[:, 0]
+    states = []
+    for _ in range(1, u.shape[1]):
+        state = predict_next(model, state, mu, norm)
+        states.append(state.cpu().numpy())
+    return np.stack(states, axis=1)
