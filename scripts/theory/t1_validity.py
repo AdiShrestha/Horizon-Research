@@ -70,7 +70,7 @@ def run(model: str, n: int, splits: int, reference: int, chunk: int) -> dict[str
     first = np.empty(splits, dtype=bool)
     conditional = np.empty(splits)
     prefix_mismatch = 0
-    prefix_cover = np.zeros(len(HORIZONS))
+    prefix_cover = np.zeros(len(HORIZONS), dtype=np.int64)
     for start in range(0, splits, chunk):
         size = min(chunk, splits - start)
         steps = step_draws(model, rng, size * (n + M_TEST)).reshape(size, n + M_TEST, -1)
@@ -86,7 +86,7 @@ def run(model: str, n: int, splits: int, reference: int, chunk: int) -> dict[str
             if steps.shape[2] > 1:
                 prefix = np.maximum.accumulate(steps[s, n:], axis=1)
                 prefix_mismatch += int(np.count_nonzero(np.all(prefix <= q, axis=1) != (test <= q)))
-                prefix_cover += [(prefix[:, h - 1] <= q).mean() for h in HORIZONS]
+                prefix_cover += [int(np.count_nonzero(prefix[:, h - 1] <= q)) for h in HORIZONS]
     target = k / (n + 1)
     beta = stats.beta(k, n + 1 - k)
     law = stats.betabinom(M_TEST, k, n + 1 - k)
@@ -118,10 +118,11 @@ def run(model: str, n: int, splits: int, reference: int, chunk: int) -> dict[str
     if model != "uniform":
         out["d_prefix_mismatches"] = prefix_mismatch
         out["d_prefix_coverage"] = dict(
-            zip(map(str, HORIZONS), (prefix_cover / splits).tolist(), strict=True)
+            zip(map(str, HORIZONS), (prefix_cover / (splits * M_TEST)).tolist(), strict=True)
         )
+        # Integer comparison: each prefix covered-count against the full-horizon covered-count.
         out["d_pass"] = prefix_mismatch == 0 and all(
-            v >= mean for v in out["d_prefix_coverage"].values()
+            int(c) >= int(counts.sum()) for c in prefix_cover
         )
     return out
 

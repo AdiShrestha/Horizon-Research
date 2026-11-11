@@ -32,3 +32,16 @@ def stream_key(stream: str, task: str, allow_confirm: bool = False) -> jax.Array
 
 def trajectory_key(stream: str, task: str, index: int, allow_confirm: bool = False) -> jax.Array:
     return jax.random.fold_in(stream_key(stream, task, allow_confirm), index)
+
+
+# Component tags: append new names, never renumber. A trajectory key is never split directly;
+# each random component of a trajectory draws from its own component key.
+COMPONENTS = {"ic": 0, "mu": 1, "perturbation": 2, "noise": 3}
+_COMPONENT_BASE = 1 << 20
+
+
+def component_key(key: jax.Array, name: str) -> jax.Array:
+    """Independent key for one named random component of a trajectory."""
+    if name not in COMPONENTS:
+        raise KeyError(f"unknown component {name!r}")
+    return jax.random.fold_in(key, _COMPONENT_BASE + COMPONENTS[name])

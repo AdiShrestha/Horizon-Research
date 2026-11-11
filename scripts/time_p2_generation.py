@@ -17,7 +17,7 @@ import jax
 import numpy as np
 
 from trajcp.data import burgers
-from trajcp.data.seeds import trajectory_key
+from trajcp.data.seeds import component_key, trajectory_key
 
 MACRO_DT, COURANT, EMULATOR = 0.01, 0.2, 256
 BYTES_PER_VALUE = 4  # float32 storage
@@ -29,8 +29,8 @@ def inputs(
     u0, nus = [], []
     for i in range(first, first + n):
         key = trajectory_key("AUX", "p2", i)
-        u0.append(burgers.fourier_ic(key, grid, args.amplitude)[0])
-        draw = float(jax.random.uniform(jax.random.fold_in(key, 1)))
+        u0.append(burgers.fourier_ic(component_key(key, "ic"), grid, args.amplitude)[0])
+        draw = float(jax.random.uniform(component_key(key, "mu")))
         nus.append(float(np.exp(np.log(args.nu_low) + draw * np.log(args.nu_high / args.nu_low))))
     return np.stack(u0), np.array(nus)
 

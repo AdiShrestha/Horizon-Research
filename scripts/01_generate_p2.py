@@ -4,7 +4,8 @@ Prior: unit periodic domain, macro step 0.01, T = 200; initial condition = rando
 (modes 1-8, slope ~ N(3, 0.5^2)) rescaled to sup norm 0.5; viscosity log-uniform on
 [1.75e-3, 5e-3]. Solver: ETDRK4 on 1,024 points (Courant 0.2, 2/3 dealiasing), float64 on the CPU,
 exact Fourier projection to 256 points, stored as float32. Trajectory i uses the stateless key of
-(stream, task p2, i), so it does not depend on batching.
+(stream, task p2, i), so it does not depend on batching; the initial condition and the viscosity
+draw from separate component keys.
 
 Writes <out>/<split>.npy (float32, shape (n, 201, 256)) and <out>/<split>_meta.parquet.
 """
@@ -23,7 +24,7 @@ import numpy as np
 import polars as pl
 
 from trajcp.data import burgers
-from trajcp.data.seeds import STREAMS, trajectory_key
+from trajcp.data.seeds import STREAMS, component_key, trajectory_key
 
 EXTENT, MACRO_DT, STEPS, EMULATOR, GRID, COURANT = 1.0, 0.01, 200, 256, 1024, 0.2
 AMPLITUDE, NU_LOW, NU_HIGH = 0.5, 1.75e-3, 5e-3
@@ -31,8 +32,8 @@ AMPLITUDE, NU_LOW, NU_HIGH = 0.5, 1.75e-3, 5e-3
 
 def draw(stream: str, index: int) -> tuple[np.ndarray, float, float]:
     key = trajectory_key(stream, "p2", index)
-    u0, slope = burgers.fourier_ic(key, GRID, AMPLITUDE)
-    unit = float(jax.random.uniform(jax.random.fold_in(key, 1)))
+    u0, slope = burgers.fourier_ic(component_key(key, "ic"), GRID, AMPLITUDE)
+    unit = float(jax.random.uniform(component_key(key, "mu")))
     nu = float(np.exp(np.log(NU_LOW) + unit * np.log(NU_HIGH / NU_LOW)))
     return u0, slope, nu
 

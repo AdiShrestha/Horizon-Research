@@ -40,3 +40,30 @@ def test_batched_viscosities_match_single_solves() -> None:
     for i, nu in enumerate(nus):
         single = burgers.solve(u0[i : i + 1], nu, 0.01, 5, 4)[0]
         np.testing.assert_allclose(many[i], single, atol=1e-12)
+
+
+def test_component_keys_independent() -> None:
+    """Viscosity draw independent of every IC coefficient and the slope (tolerance fixed in advance:
+    |Spearman| < 0.2 over 300 keys); all component keys pairwise different."""
+    import jax
+    import jax.numpy as jnp
+    from scipy import stats
+
+    from trajcp.data.seeds import COMPONENTS, component_key, trajectory_key
+
+    nus, coefs, slopes, seen = [], [], [], set()
+    for i in range(300):
+        key = trajectory_key("AUX", "p2", i)
+        comps = {name: component_key(key, name) for name in COMPONENTS}
+        for k in [key, *comps.values()]:
+            raw = tuple(np.asarray(jax.random.key_data(k)).ravel().tolist())
+            assert raw not in seen
+            seen.add(raw)
+        k_slope, k_coef = jax.random.split(comps["ic"])
+        coefs.append(np.asarray(jax.random.normal(k_coef, (2, 8), dtype=jnp.float64)).ravel())
+        slopes.append(float(jax.random.normal(k_slope, dtype=jnp.float64)))
+        nus.append(float(jax.random.uniform(comps["mu"])))
+    columns = [*np.array(coefs).T, np.array(slopes)]
+    assert len(columns) == 17
+    for col in columns:
+        assert abs(stats.spearmanr(nus, col).statistic) < 0.2

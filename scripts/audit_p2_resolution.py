@@ -28,7 +28,7 @@ from pathlib import Path
 import numpy as np
 
 from trajcp.data import burgers
-from trajcp.data.seeds import trajectory_key
+from trajcp.data.seeds import component_key, trajectory_key
 
 GRIDS = (512, 1024, 2048, 4096)
 EMULATOR = 256
@@ -39,7 +39,9 @@ TOL_CONVERGENCE, TOL_ENERGY, TOL_OVERSHOOT, DECAY_FLAG = 1e-5, 1e-6, 1e-4, 0.1
 def initial_conditions(n: int, points: int, amplitude: float, first: int) -> np.ndarray:
     return np.stack(
         [
-            burgers.fourier_ic(trajectory_key("AUX", "p2", first + i), points, amplitude)[0]
+            burgers.fourier_ic(
+                component_key(trajectory_key("AUX", "p2", first + i), "ic"), points, amplitude
+            )[0]
             for i in range(n)
         ]
     )
