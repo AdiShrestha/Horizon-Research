@@ -14,6 +14,7 @@ step varies from trajectory to trajectory.
 from __future__ import annotations
 
 import math
+from typing import Any
 
 import numpy as np
 import numpy.typing as npt
@@ -30,7 +31,7 @@ def _spatial_amplitude(cells: int, length: float) -> FloatArray:
     return np.sqrt(np.clip(spectrum, 0.0, None))
 
 
-def sup_scores(
+def step_scores(
     rng: np.random.Generator,
     n: int,
     *,
@@ -42,7 +43,7 @@ def sup_scores(
     weight_rate: float = 0.03,
     chunk: int = 2000,
 ) -> FloatArray:
-    """n i.i.d. scores S = max_{t, x} |e_t(x)| / w_t from the field model above."""
+    """Per-step maxima max_x |e_t(x)| / w_t, shape (n, steps), from the field model above."""
     if not 0.0 <= rho_t < 1.0:
         raise ValueError("rho_t must lie in [0, 1)")
     amplitude = _spatial_amplitude(cells, length) if length > 0.0 else None
@@ -59,16 +60,20 @@ def sup_scores(
             dtype=np.float64,
         )
 
-    scores = np.empty(n, dtype=np.float64)
+    out = np.empty((n, steps), dtype=np.float64)
     for start in range(0, n, chunk):
         size = min(chunk, n - start)
         z = noise(size)
-        best = np.abs(z).max(axis=1) * ratio[0]
+        out[start : start + size, 0] = np.abs(z).max(axis=1) * ratio[0]
         for step in range(1, steps):
             z = rho_t * z + innovation * noise(size)
-            best = np.maximum(best, np.abs(z).max(axis=1) * ratio[step])
-        scores[start : start + size] = best
-    return scores
+            out[start : start + size, step] = np.abs(z).max(axis=1) * ratio[step]
+    return out
+
+
+def sup_scores(rng: np.random.Generator, n: int, **kwargs: Any) -> FloatArray:
+    """n i.i.d. scores S = max_{t, x} |e_t(x)| / w_t from the field model above."""
+    return np.asarray(step_scores(rng, n, **kwargs).max(axis=1), dtype=np.float64)
 
 
 def uniform_scores(rng: np.random.Generator, n: int) -> FloatArray:
