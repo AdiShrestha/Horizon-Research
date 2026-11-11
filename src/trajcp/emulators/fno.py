@@ -75,7 +75,11 @@ class SpectralConv2d(nn.Module):
 
 class FNO(nn.Module):
     """Fourier neural operator in 1D or 2D: pointwise lift, ``layers`` Fourier blocks with a
-    pointwise skip and GELU, pointwise projection. Input (batch, in_channels, *grid)."""
+    pointwise skip and GELU, pointwise projection. Input (batch, in_channels, *grid).
+
+    With ``cond_dim > 0`` every block output is modulated by FiLM,
+    h <- h * (1 + gamma(c)) + beta(c),
+    from a conditioning vector c of shape (batch, cond_dim); gamma and beta start at zero."""
 
     def __init__(
         self,
@@ -86,6 +90,7 @@ class FNO(nn.Module):
         modes: int,
         layers: int = 4,
         projection: int = 128,
+        cond_dim: int = 0,
     ) -> None:
         super().__init__()
         if dim not in (1, 2):
@@ -102,13 +107,25 @@ class FNO(nn.Module):
         self.project = nn.Sequential(
             conv(width, projection, 1), nn.GELU(), conv(projection, out_channels, 1)
         )
+        self.film = nn.ModuleList(
+            nn.Linear(cond_dim, 2 * width) for _ in range(layers if cond_dim else 0)
+        )
+        for film in self.film:
+            nn.init.zeros_(film.weight)
+            nn.init.zeros_(film.bias)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, cond: torch.Tensor | None = None) -> torch.Tensor:
+        if (cond is None) != (len(self.film) == 0):
+            raise ValueError("pass cond exactly when the model was built with cond_dim > 0")
         h = self.lift(x)
+        expand = (slice(None), slice(None)) + (None,) * (x.dim() - 2)
         last = len(self.spectral) - 1
         blocks = zip(self.spectral, self.pointwise, strict=True)
         for i, (spectral, pointwise) in enumerate(blocks):
             h = spectral(h) + pointwise(h)
+            if cond is not None:
+                gamma, beta = self.film[i](cond).chunk(2, dim=1)
+                h = h * (1.0 + gamma[expand]) + beta[expand]
             if i < last:
                 h = nn.functional.gelu(h)
         return self.project(h)
