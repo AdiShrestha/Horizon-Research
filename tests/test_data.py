@@ -67,3 +67,16 @@ def test_component_keys_independent() -> None:
     assert len(columns) == 17
     for col in columns:
         assert abs(stats.spearmanr(nus, col).statistic) < 0.2
+
+
+def test_linear_exact_matches_shift_and_exponax() -> None:
+    from trajcp.data import linear
+
+    x = np.arange(64) / 64
+    u0 = np.sin(2 * np.pi * x) + 0.3 * np.cos(6 * np.pi * x)
+    # pure advection by c * t = 0.25 is a shift by 16 grid points
+    shifted = linear.exact(u0, 1.0, 0.0, 0.0, 0.25, 1)[1]
+    assert np.abs(shifted - np.roll(u0, 16)).max() < 1e-12
+    a = linear.exact(u0, 0.7, 2e-3, 5e-5, 0.01, 50)
+    b = linear.solve_exponax(u0, 0.7, 2e-3, 5e-5, 0.01, 50)
+    assert np.abs(a - b).max() < 1e-12
