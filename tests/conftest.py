@@ -12,6 +12,7 @@ _NEEDS = {
     "test_data.py": ("jax", "exponax"),
     "test_training.py": ("torch", "safetensors"),
     "test_mps.py": ("torch",),
+    "test_checkpoint.py": ("torch", "safetensors"),
     "test_oracles.py": ("mapie",),
 }
 
