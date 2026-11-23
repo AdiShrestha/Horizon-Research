@@ -7,3 +7,5 @@ epoch 15 train 1.2920e-02 val 1.6218e-02 state 1.812e-04 943s
 epoch 20 train 1.1042e-02 val 1.3205e-02 state 1.415e-04 1234s
 epoch 25 train 1.0031e-02 val 1.0704e-02 state 1.249e-04 1528s
 epoch 30 train 9.2679e-03 val 1.1180e-02 state 1.219e-04 1803s
+epoch 35 train 8.5860e-03 val 9.0637e-03 state 1.035e-04 2074s
+epoch 40 train 8.1334e-03 val 7.1082e-03 state 8.467e-05 2373s
