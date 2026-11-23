@@ -1,0 +1,48 @@
+Mon Nov 23 16:50:15 +0545 2026
+{
+ "linear_growth": {
+  "rows": [
+   {
+    "mode": 1,
+    "measured": 0.07491380653628753,
+    "expected": 0.07491380653628918,
+    "abs_diff": 1.6514567491299204e-15
+   },
+   {
+    "mode": 2,
+    "measured": 0.21981716232382978,
+    "expected": 0.21981716232383108,
+    "abs_diff": 1.304512053934559e-15
+   },
+   {
+    "mode": 3,
+    "measured": 0.19519587589864945,
+    "expected": 0.19519587589864862,
+    "abs_diff": 8.326672684688674e-16
+   },
+   {
+    "mode": 4,
+    "measured": -0.39814037184589035,
+    "expected": -0.39814037184588646,
+    "abs_diff": 3.885780586188048e-15
+   },
+   {
+    "mode": 5,
+    "measured": -2.1190580276590523,
+    "expected": -2.1190580276590545,
+    "abs_diff": 2.220446049250313e-15
+   }
+  ],
+  "pass": true
+ },
+ "nonlinear_agreement": {
+  "rel_diff": 2.044664464396216e-11,
+  "pass": true,
+  "control_sign_flip_rel_diff": 0.5986126845666033
+ }
+}
+{"mean": 0.0482792593105499, "se": 0.0008125098459092331, "published": 0.043, "tolerance": 0.15, "pass": true, "trajectories": 50, "horizon": 1000.0, "seconds": 12.420253041003889}
+real 18.20
+user 17.21
+sys 1.18
+Mon Nov 23 16:50:33 +0545 2026

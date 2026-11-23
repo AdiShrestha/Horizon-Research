@@ -1,0 +1,9 @@
+Mon Nov 23 16:37:14 +0545 2026
+/Users/adi/Desktop/Projects/Horizon Research/source/scripts/02_train_e1.py:144: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at /Users/runner/work/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:214.)
+  u_fit = torch.from_numpy(np.ascontiguousarray(raw[:n_fit])).to(device)
+epoch 5 train 2.8935e-02 val 2.9090e-02 state 3.150e-04 305s
+epoch 10 train 1.6313e-02 val 1.7199e-02 state 1.758e-04 647s
+epoch 15 train 1.2920e-02 val 1.6218e-02 state 1.812e-04 943s
+epoch 20 train 1.1042e-02 val 1.3205e-02 state 1.415e-04 1234s
+epoch 25 train 1.0031e-02 val 1.0704e-02 state 1.249e-04 1528s
+epoch 30 train 9.2679e-03 val 1.1180e-02 state 1.219e-04 1803s

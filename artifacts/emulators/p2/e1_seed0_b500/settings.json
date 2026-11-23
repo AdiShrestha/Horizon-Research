@@ -1,0 +1,46 @@
+{
+  "code": {
+    "commit": "6031b21066d6c6f6f8dc7e37ce7a8fff6e8ad83d",
+    "dirty": false
+  },
+  "data": "artifacts/data/p2",
+  "seed": 0,
+  "epochs": 500,
+  "n_fit": 900,
+  "n_val": 100,
+  "validation_indices": [
+    900,
+    999
+  ],
+  "normalization": {
+    "state_mean": 1.1274159389982236e-13,
+    "state_sd": 0.18424537621169312,
+    "increment_sd": 0.0026954640748508892,
+    "mu_mean": -5.808983342622943,
+    "mu_sd": 0.3021863509929543
+  },
+  "model": {
+    "width": 64,
+    "modes": 16,
+    "layers": 4,
+    "cond": "log nu, channel + FiLM"
+  },
+  "optimizer": {
+    "name": "AdamW",
+    "betas": [
+      0.9,
+      0.99
+    ],
+    "weight_decay": 0.0001
+  },
+  "lr": {
+    "peak": 0.001,
+    "floor": 1e-06,
+    "warmup": 5,
+    "schedule": "cosine per step"
+  },
+  "batch": 64,
+  "device": "mps",
+  "torch": "2.15.0",
+  "data_sha256": "213ec884669d4fb464e6f6bce1021d7e60cfa7bf5d20a6bddd11aefa7733093f"
+}
