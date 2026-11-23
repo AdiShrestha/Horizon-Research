@@ -1,4 +1,5 @@
-# Durable run environment: requirements-g0.lock plus safetensors, scikit-learn, pytest, hypothesis.
+# Durable run environment: requirements-g0.lock plus safetensors, scikit-learn, pytest, hypothesis,
+# and polars (added in WP-A: the ported generators and trainer import it; pin from the parallel lock).
 # CPython 3.12.8, macOS arm64. Built into source/.venv-run (IC-02 WP-A, A12).
 contourpy==1.4.0
 cycler==0.12.1
@@ -37,3 +38,5 @@ hypothesis==6.170.15
 pytest==9.1.1
 safetensors==0.8.0
 scikit-learn==1.9.0
+polars==2.1.0
+polars-runtime-32==2.1.0
