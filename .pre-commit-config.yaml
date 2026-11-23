@@ -1,0 +1,20 @@
+# Run from the source package Git root with the locked development environment active.
+repos:
+  - repo: local
+    hooks:
+      - id: ruff
+        name: Ruff
+        entry: ruff check
+        language: system
+        types_or: [python, pyi]
+      - id: mypy
+        name: mypy
+        entry: python -m mypy src/trajcp
+        language: system
+        pass_filenames: false
+        files: '^(src/trajcp/.*\.pyi?|pyproject\.toml)$'
+      - id: conformal-precision
+        name: Conformal precision and device safety
+        entry: python scripts/check_conformal_safety.py
+        language: system
+        files: '^src/trajcp/conformal/.*\.pyi?$'

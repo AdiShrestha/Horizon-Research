@@ -1,0 +1,320 @@
+{
+  "status": "passed",
+  "python": "3.12.8",
+  "versions": {
+    "torch": "2.15.0",
+    "neuraloperator": "2.0.0",
+    "numpy": "2.5.0",
+    "tensorly": "0.10.0",
+    "tensorly-torch": "0.5.0"
+  },
+  "device": "cpu",
+  "dtype": "float32 (complex64 FFT)",
+  "fixture": {
+    "grids": [
+      63,
+      64,
+      255,
+      256
+    ],
+    "examples": [
+      "seeded Gaussian",
+      "boundary-frequency harmonics",
+      "impulse",
+      "step"
+    ],
+    "channels": [
+      1,
+      32,
+      1
+    ],
+    "blocks": 4,
+    "retained_real_fft_bins": [
+      0,
+      15
+    ],
+    "neuraloperator_n_modes_argument": [
+      30
+    ],
+    "fft_norm": "backward in both directions",
+    "domain_padding": null,
+    "spectral_padding": "zero unretained coefficients; inverse FFT is given the original grid length"
+  },
+  "mapped_layers": [
+    "linear lift, four dense spectral convolutions, four linear pointwise skips, and linear readout",
+    "ReLU after each spectral-plus-skip sum, including the final ReLU supplied by the projection adapter",
+    "the local 0.9 input + 0.1 readout residual blend applied around the adapted neuraloperator model"
+  ],
+  "upstream_defaults_outside_comparison": [
+    "stock two-layer lifting and projection MLPs, positional embedding, and channel MLPs",
+    "default GELU and omission of activation after the last FNO block",
+    "additional padding, normalization, or resampling configurations"
+  ],
+  "scope": "one-step deterministic 1D forward equivalence of the adapted architectures",
+  "not_tested": [
+    "training or gradient parity",
+    "long rollouts",
+    "float64 upstream",
+    "2D or U-Net",
+    "official cohorts"
+  ],
+  "limits": {
+    "max_abs": 2e-05,
+    "max_relative_l2_per_example": 2e-06
+  },
+  "measurements": {
+    "63": {
+      "lift": {
+        "max_abs": 0.0,
+        "max_relative_l2_per_example": 0.0
+      },
+      "block_1_spectral": {
+        "max_abs": 2.980232238769531e-07,
+        "max_relative_l2_per_example": 1.6481770971519162e-07
+      },
+      "block_1_pointwise": {
+        "max_abs": 0.0,
+        "max_relative_l2_per_example": 0.0
+      },
+      "block_1_output": {
+        "max_abs": 4.76837158203125e-07,
+        "max_relative_l2_per_example": 7.747830523390969e-08
+      },
+      "block_2_spectral": {
+        "max_abs": 2.384185791015625e-07,
+        "max_relative_l2_per_example": 1.653571884028574e-07
+      },
+      "block_2_pointwise": {
+        "max_abs": 0.0,
+        "max_relative_l2_per_example": 0.0
+      },
+      "block_2_output": {
+        "max_abs": 7.152557373046875e-07,
+        "max_relative_l2_per_example": 1.4860159463872876e-07
+      },
+      "block_3_spectral": {
+        "max_abs": 1.7881393432617188e-07,
+        "max_relative_l2_per_example": 1.5927338251476708e-07
+      },
+      "block_3_pointwise": {
+        "max_abs": 0.0,
+        "max_relative_l2_per_example": 0.0
+      },
+      "block_3_output": {
+        "max_abs": 4.76837158203125e-07,
+        "max_relative_l2_per_example": 1.7837383012150447e-07
+      },
+      "block_4_spectral": {
+        "max_abs": 1.1920928955078125e-07,
+        "max_relative_l2_per_example": 1.5472440041462233e-07
+      },
+      "block_4_pointwise": {
+        "max_abs": 0.0,
+        "max_relative_l2_per_example": 0.0
+      },
+      "block_4_output": {
+        "max_abs": 5.960464477539062e-07,
+        "max_relative_l2_per_example": 1.8639670245658173e-07
+      },
+      "readout": {
+        "max_abs": 2.980232238769531e-07,
+        "max_relative_l2_per_example": 2.436026904440997e-07
+      },
+      "full_output": {
+        "max_abs": 5.960464477539063e-08,
+        "max_relative_l2_per_example": 2.2352487669464127e-08
+      }
+    },
+    "64": {
+      "lift": {
+        "max_abs": 0.0,
+        "max_relative_l2_per_example": 0.0
+      },
+      "block_1_spectral": {
+        "max_abs": 2.384185791015625e-07,
+        "max_relative_l2_per_example": 1.5647427904810412e-07
+      },
+      "block_1_pointwise": {
+        "max_abs": 0.0,
+        "max_relative_l2_per_example": 0.0
+      },
+      "block_1_output": {
+        "max_abs": 4.76837158203125e-07,
+        "max_relative_l2_per_example": 7.668506812420897e-08
+      },
+      "block_2_spectral": {
+        "max_abs": 1.7881393432617188e-07,
+        "max_relative_l2_per_example": 1.5843745283384782e-07
+      },
+      "block_2_pointwise": {
+        "max_abs": 0.0,
+        "max_relative_l2_per_example": 0.0
+      },
+      "block_2_output": {
+        "max_abs": 4.76837158203125e-07,
+        "max_relative_l2_per_example": 1.3466815279870664e-07
+      },
+      "block_3_spectral": {
+        "max_abs": 1.4901161193847656e-07,
+        "max_relative_l2_per_example": 1.508346890982921e-07
+      },
+      "block_3_pointwise": {
+        "max_abs": 0.0,
+        "max_relative_l2_per_example": 0.0
+      },
+      "block_3_output": {
+        "max_abs": 5.364418029785156e-07,
+        "max_relative_l2_per_example": 1.7209323401072148e-07
+      },
+      "block_4_spectral": {
+        "max_abs": 1.043081283569336e-07,
+        "max_relative_l2_per_example": 1.4019143389015203e-07
+      },
+      "block_4_pointwise": {
+        "max_abs": 0.0,
+        "max_relative_l2_per_example": 0.0
+      },
+      "block_4_output": {
+        "max_abs": 4.76837158203125e-07,
+        "max_relative_l2_per_example": 1.7975168984866424e-07
+      },
+      "readout": {
+        "max_abs": 1.7881393432617188e-07,
+        "max_relative_l2_per_example": 2.6943346449173017e-07
+      },
+      "full_output": {
+        "max_abs": 1.1920928955078125e-07,
+        "max_relative_l2_per_example": 2.4389003683824384e-08
+      }
+    },
+    "255": {
+      "lift": {
+        "max_abs": 0.0,
+        "max_relative_l2_per_example": 0.0
+      },
+      "block_1_spectral": {
+        "max_abs": 2.384185791015625e-07,
+        "max_relative_l2_per_example": 1.6370303922084944e-07
+      },
+      "block_1_pointwise": {
+        "max_abs": 0.0,
+        "max_relative_l2_per_example": 0.0
+      },
+      "block_1_output": {
+        "max_abs": 4.76837158203125e-07,
+        "max_relative_l2_per_example": 7.549054287520138e-08
+      },
+      "block_2_spectral": {
+        "max_abs": 1.7881393432617188e-07,
+        "max_relative_l2_per_example": 1.514113150930298e-07
+      },
+      "block_2_pointwise": {
+        "max_abs": 0.0,
+        "max_relative_l2_per_example": 0.0
+      },
+      "block_2_output": {
+        "max_abs": 4.76837158203125e-07,
+        "max_relative_l2_per_example": 1.4093874742829387e-07
+      },
+      "block_3_spectral": {
+        "max_abs": 1.7881393432617188e-07,
+        "max_relative_l2_per_example": 1.496760336277045e-07
+      },
+      "block_3_pointwise": {
+        "max_abs": 0.0,
+        "max_relative_l2_per_example": 0.0
+      },
+      "block_3_output": {
+        "max_abs": 3.5762786865234375e-07,
+        "max_relative_l2_per_example": 1.6875040514604747e-07
+      },
+      "block_4_spectral": {
+        "max_abs": 8.940696716308594e-08,
+        "max_relative_l2_per_example": 1.5049310002527924e-07
+      },
+      "block_4_pointwise": {
+        "max_abs": 0.0,
+        "max_relative_l2_per_example": 0.0
+      },
+      "block_4_output": {
+        "max_abs": 4.76837158203125e-07,
+        "max_relative_l2_per_example": 1.7176545010047181e-07
+      },
+      "readout": {
+        "max_abs": 2.086162567138672e-07,
+        "max_relative_l2_per_example": 2.0967652272177233e-07
+      },
+      "full_output": {
+        "max_abs": 1.1920928955078125e-07,
+        "max_relative_l2_per_example": 2.1022504202425767e-08
+      }
+    },
+    "256": {
+      "lift": {
+        "max_abs": 0.0,
+        "max_relative_l2_per_example": 0.0
+      },
+      "block_1_spectral": {
+        "max_abs": 1.7881393432617188e-07,
+        "max_relative_l2_per_example": 1.641135606918175e-07
+      },
+      "block_1_pointwise": {
+        "max_abs": 0.0,
+        "max_relative_l2_per_example": 0.0
+      },
+      "block_1_output": {
+        "max_abs": 2.384185791015625e-07,
+        "max_relative_l2_per_example": 7.200348069594446e-08
+      },
+      "block_2_spectral": {
+        "max_abs": 2.384185791015625e-07,
+        "max_relative_l2_per_example": 1.596075447705152e-07
+      },
+      "block_2_pointwise": {
+        "max_abs": 0.0,
+        "max_relative_l2_per_example": 0.0
+      },
+      "block_2_output": {
+        "max_abs": 4.76837158203125e-07,
+        "max_relative_l2_per_example": 1.379047883070106e-07
+      },
+      "block_3_spectral": {
+        "max_abs": 1.1920928955078125e-07,
+        "max_relative_l2_per_example": 1.462300641326377e-07
+      },
+      "block_3_pointwise": {
+        "max_abs": 0.0,
+        "max_relative_l2_per_example": 0.0
+      },
+      "block_3_output": {
+        "max_abs": 3.5762786865234375e-07,
+        "max_relative_l2_per_example": 1.7578605200241784e-07
+      },
+      "block_4_spectral": {
+        "max_abs": 1.1920928955078125e-07,
+        "max_relative_l2_per_example": 1.4168540788061906e-07
+      },
+      "block_4_pointwise": {
+        "max_abs": 0.0,
+        "max_relative_l2_per_example": 0.0
+      },
+      "block_4_output": {
+        "max_abs": 3.5762786865234375e-07,
+        "max_relative_l2_per_example": 1.8421212514155812e-07
+      },
+      "readout": {
+        "max_abs": 1.7881393432617188e-07,
+        "max_relative_l2_per_example": 1.973251565749893e-07
+      },
+      "full_output": {
+        "max_abs": 2.384185791015625e-07,
+        "max_relative_l2_per_example": 2.2208117328220546e-08
+      }
+    }
+  },
+  "reproduction_from_workspace_root": [
+    "uv venv --no-project --python 3.12.8 /tmp/horizon-neuralop",
+    "uv pip install --python /tmp/horizon-neuralop/bin/python -r source/requirements-neuraloperator.lock",
+    "PYTHONPATH=source/src /tmp/horizon-neuralop/bin/python source/scripts/03_check_neuraloperator_parity.py --out /tmp/horizon-neuraloperator-parity-repeat.json"
+  ]
+}

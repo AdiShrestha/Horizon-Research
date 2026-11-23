@@ -1,0 +1,13 @@
+# Install with requirements.lock in the same development environment.
+# Verified with CPython 3.12.8 on macOS arm64.
+cfgv==3.5.0
+distlib==0.4.4
+filelock==4.2.12
+identify==2.6.20
+nodeenv==1.12.0
+platformdirs==4.14.8
+pre-commit==4.5.1
+python-discovery==1.9.6
+pyyaml==6.0.4
+ruff==0.17.4
+virtualenv==21.15.11

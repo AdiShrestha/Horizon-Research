@@ -1,0 +1,43 @@
+# Local Python environments and caches
+.venv/
+.venv-*/
+venv/
+.env
+.env.*
+!.env.example
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.hypothesis/
+.mypy_cache/
+.ruff_cache/
+.pre-commit-cache/
+.uv-cache/
+.coverage
+.coverage.*
+htmlcov/
+.DS_Store
+
+# Build and packaging output
+/build/
+/dist/
+*.egg-info/
+.eggs/
+*.egg
+
+# Generated trajectories, caches, checkpoints, and large tabular output
+/data/
+/artifacts/checkpoints/
+/artifacts/stats/
+/artifacts/**/*.npy
+/artifacts/**/*.npz
+/artifacts/**/*.parquet
+/artifacts/**/*.zarr/
+/artifacts/**/*.pt
+/artifacts/**/*.pth
+/artifacts/**/*.ckpt
+/artifacts/**/*.safetensors
+/results/**/*.parquet
+
+# Track the small pilot table containing seed keys and viscosity values.
+!/artifacts/p2_engineering_pilot/metadata.parquet

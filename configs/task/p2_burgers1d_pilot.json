@@ -1,0 +1,17 @@
+{
+  "namespace": "engineering_pilot",
+  "master_seed": 20261104,
+  "grid": 256,
+  "solver_grid": 512,
+  "substeps": 10,
+  "steps": 200,
+  "domain_extent": 1.0,
+  "macro_dt": 0.005,
+  "nu_low": 0.0005,
+  "nu_high": 0.005,
+  "slope_mean": 3.0,
+  "slope_std": 0.5,
+  "max_mode": 8,
+  "amplitude_low": 0.5,
+  "amplitude_high": 1.0
+}

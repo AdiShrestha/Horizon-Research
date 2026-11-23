@@ -1,0 +1,121 @@
+{
+  "intended_use": "local engineering only, excluded from study cohorts",
+  "config": {
+    "namespace": "engineering_pilot",
+    "master_seed": 20261104,
+    "grid": 256,
+    "solver_grid": 512,
+    "substeps": 10,
+    "steps": 200,
+    "domain_extent": 1.0,
+    "macro_dt": 0.005,
+    "nu_low": 0.0005,
+    "nu_high": 0.005,
+    "slope_mean": 3.0,
+    "slope_std": 0.5,
+    "max_mode": 8,
+    "amplitude_low": 0.5,
+    "amplitude_high": 1.0
+  },
+  "seed_mapping": "fold_in(fold_in(PRNGKey(master_seed), 1345474609), trajectory_id)",
+  "trajectory_ids": [
+    0,
+    99
+  ],
+  "snapshot_shape": [
+    100,
+    201,
+    1,
+    256
+  ],
+  "batch_size": 10,
+  "solver": "Exponax conservative Burgers ETDRK4, 2/3 dealiasing",
+  "backend": "cpu",
+  "python": "3.12.8",
+  "versions": {
+    "jax": "0.12.0.1",
+    "jaxlib": "0.12.0.1",
+    "exponax": "0.2.1",
+    "numpy": "2.5.0",
+    "pyarrow": "24.0.0"
+  },
+  "timings": {
+    "coarse_compile_seconds": 0.4456757919979282,
+    "coarse_generate_and_store_seconds": 2.0970339580089785,
+    "coarse_trajectories_per_second": 47.68639993552829,
+    "refined_compile_seconds": 0.41434095799922943,
+    "refined_solve_seconds": 0.8529322909889743,
+    "additional_refinement_seconds_including_compile": 1.4447632920346223
+  },
+  "validity": {
+    "all_finite": true,
+    "max_mean_drift": 2.220446049250313e-16,
+    "max_positive_step_mean_square_change": 0.0,
+    "max_float32_storage_error": 1.1919583986497173e-07,
+    "max_reordered_rebatched_float64_error": 0.0,
+    "terminal_over_initial_rms_min_median_max": [
+      0.1740559410344722,
+      0.2932210970871175,
+      0.480536511472174
+    ]
+  },
+  "refinement": {
+    "trajectory_ids": [
+      0,
+      11,
+      22,
+      33,
+      44,
+      55,
+      66,
+      77,
+      88,
+      99
+    ],
+    "solver_grids": [
+      512,
+      1024
+    ],
+    "substeps": [
+      10,
+      20
+    ],
+    "comparison_grid": 256,
+    "pointwise_max_file": "refinement_delta.npy",
+    "per_trajectory_sup_errors": [
+      8.583590784261297e-07,
+      2.2593943271864703e-08,
+      0.030120496677455755,
+      5.7386826401994995e-08,
+      1.530010186379105e-05,
+      2.6264044378915274e-05,
+      0.0006834218473670273,
+      5.809162750836094e-07,
+      9.651696472046112e-07,
+      0.02957145940824102
+    ],
+    "worst_location": {
+      "trajectory_id": 22,
+      "macro_step": 9,
+      "cell": 73
+    },
+    "epsilon_num_w0": 0.030120496677455755,
+    "worst_case_diagnostics": {
+      "time_only_at_base_grid": 4.351459976215111e-05,
+      "space_only_base_to_refined": 0.03010315301022759,
+      "space_only_refined_to_8x": 0.0005266875803560112,
+      "extra_solver_grids": [
+        512,
+        2048
+      ],
+      "extra_substeps": 20
+    },
+    "epsilon_num_over_qhat": null,
+    "t_data_2_status": "pending calibrated qhat and final weight field"
+  },
+  "sha256": {
+    "metadata.parquet": "6dc8824b18142114e163b1552acba52faa80c0a3b64f09b8196fc41a0d4a3f76",
+    "refinement_delta.npy": "e07a946ed526d331a9a3e91618ecd6398107091b7a84e9263d4667c3ba4aff1a",
+    "trajectories.npy": "90713b18ef4c7a75ee3db1f771f01e50546118f6e6166a0726b79b0211494597"
+  }
+}

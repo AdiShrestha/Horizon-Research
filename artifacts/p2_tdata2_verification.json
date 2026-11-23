@@ -1,0 +1,26 @@
+{
+  "freeze_sha256": "0e6261e959bc90d8c33f9807e5e5f998d19a1e39d22e90992f7f133aa6fb2f7e",
+  "thresholds_locations_and_all_per_trajectory_results_exact_on_repeat": true,
+  "first_run_wall_seconds": 41.62478974997066,
+  "repeat_run_wall_seconds": 41.61951320798835,
+  "key_overlap_check": {
+    "audit_key_count": 50,
+    "checks": {
+      "20261123": {
+        "prior_key_count": 65,
+        "audit_key_overlap": 0
+      },
+      "20261124": {
+        "prior_key_count": 24,
+        "audit_key_overlap": 0
+      },
+      "20261125": {
+        "prior_key_count": 85,
+        "audit_key_overlap": 0
+      }
+    }
+  },
+  "report_sha256": "a9bb1eee42fc0c5aebf35f0a010e41805f3d70664077ef08da17563460681d32",
+  "repeat_report_sha256": "2be48fbb452d2c48b3cda2c1828246e48119fc7615821d571978522a83739c62",
+  "unit_results": "102 passed, including the weighted hand oracle and strict boundary check"
+}

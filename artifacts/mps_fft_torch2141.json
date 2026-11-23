@@ -1,0 +1,144 @@
+{
+  "versions": {
+    "python": "3.12.8",
+    "torch": "2.14.1",
+    "numpy": "2.5.0",
+    "mlx": "0.32.4",
+    "jax": "0.12.0.1",
+    "jaxlib": "0.12.0.1",
+    "exponax": "0.2.1",
+    "pyarrow": "24.0.0"
+  },
+  "cpu_threads": 4,
+  "host": {
+    "architecture": "arm64",
+    "macos": "ProductName:\t\tmacOS\nProductVersion:\t\t27.2.1\nBuildVersion:\t\t26B131",
+    "hardware": [
+      "Chipset Model: Apple M3",
+      "Total Number of Cores: 10",
+      "Metal Support: Metal 4",
+      "Model Name: MacBook Air",
+      "Chip: Apple M3",
+      "Total Number of Cores: 8 (4 Performance and 4 Efficiency)",
+      "Memory: 16 GB"
+    ],
+    "unified_ram_bytes": 17179869184,
+    "xcode": "xcode-select: error: tool 'xcodebuild' requires Xcode, but active developer directory '/Library/Developer/CommandLineTools' is a command line tools instance",
+    "command_line_tools": "package-id: com.apple.pkg.CLTools_Executables\nversion: 27.2.0.0.1792721180\nvolume: /\nlocation: /\ninstall-time: 1794593381",
+    "metal_compiler": "xcrun: error: unable to find utility \"metal\", not a developer tool or in PATH",
+    "mps_built": true,
+    "mps_available": true,
+    "metal_recommended_working_set_bytes": 12713115648,
+    "power": [
+      "Now drawing from 'Battery Power'",
+      "-InternalBattery-0 \t78%; discharging; 9:25 remaining present: true"
+    ]
+  },
+  "run_context": {
+    "fft": {
+      "started_at_utc": "2026-11-21T03:32:03.732163+00:00",
+      "power": "Now drawing from 'Battery Power'"
+    }
+  },
+  "p2_engineering_pilot": {
+    "path": "artifacts/p2_engineering_pilot/report.json",
+    "timings": {
+      "coarse_compile_seconds": 0.509337791998405,
+      "coarse_generate_and_store_seconds": 2.0555194579646923,
+      "coarse_trajectories_per_second": 48.649502982091306,
+      "refined_compile_seconds": 0.5056989170261659,
+      "refined_solve_seconds": 0.9405762919923291
+    },
+    "refinement": {
+      "trajectory_ids": [
+        0,
+        11,
+        22,
+        33,
+        44,
+        55,
+        66,
+        77,
+        88,
+        99
+      ],
+      "solver_grids": [
+        512,
+        1024
+      ],
+      "substeps": [
+        10,
+        20
+      ],
+      "comparison_grid": 256,
+      "pointwise_max_file": "refinement_delta.npy",
+      "per_trajectory_sup_errors": [
+        8.583590784261297e-07,
+        2.2593943271864703e-08,
+        0.030120496677455755,
+        5.7386826401994995e-08,
+        1.530010186379105e-05,
+        2.6264044378915274e-05,
+        0.0006834218473670273,
+        5.809162750836094e-07,
+        9.651696472046112e-07,
+        0.02957145940824102
+      ],
+      "worst_location": {
+        "trajectory_id": 22,
+        "macro_step": 9,
+        "cell": 73
+      },
+      "epsilon_num_w0": 0.030120496677455755,
+      "epsilon_num_over_qhat": null,
+      "t_data_2_status": "pending calibrated qhat and final weight field"
+    },
+    "validity": {
+      "all_finite": true,
+      "max_mean_drift": 2.220446049250313e-16,
+      "max_positive_step_mean_square_change": 0.0,
+      "max_float32_storage_error": 1.1919583986497173e-07,
+      "terminal_over_initial_rms_min_median_max": [
+        0.1740559410344722,
+        0.2932210970871175,
+        0.480536511472174
+      ]
+    }
+  },
+  "mps_checks": {
+    "T-mps-2": {
+      "status": "failed",
+      "device": "mps float32",
+      "absolute_error_limit": 1e-06,
+      "cases": [
+        {
+          "shape": [
+            31
+          ],
+          "max_absolute_error": 1.430511474609375e-06
+        },
+        {
+          "shape": [
+            63,
+            65
+          ],
+          "max_absolute_error": 1.9073486328125e-06
+        },
+        {
+          "shape": [
+            33,
+            64
+          ],
+          "max_absolute_error": 1.1920928955078125e-06
+        },
+        {
+          "shape": [
+            65,
+            33
+          ],
+          "max_absolute_error": 1.1920928955078125e-06
+        }
+      ]
+    }
+  }
+}

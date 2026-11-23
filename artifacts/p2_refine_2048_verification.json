@@ -1,0 +1,33 @@
+{
+  "identical_paired_and_fresh_audit_metadata_thresholds_and_results": true,
+  "independently_checked_report_rows": 2400,
+  "previous_2048_temporal_control_reproduced_exactly": true,
+  "fixture_tests": "102 passed, including the hand-calculated cross-trajectory ratio and strict boundary",
+  "identity_checks": {
+    "paired": {
+      "unique_keys": 50,
+      "unique_fingerprints": 50,
+      "prior_non_audit_key_count": 174,
+      "prior_input_fingerprint_count": 109,
+      "same_keys_as_previous_audit": true,
+      "key_and_fingerprint_overlap_across_cohorts": 0,
+      "fingerprint_commitment": "9fc5b5e7acb2aff996b6a19a04d6004421232e7a5192ec6b591b546e5d9b9b48"
+    },
+    "fresh": {
+      "unique_keys": 50,
+      "unique_fingerprints": 50,
+      "prior_non_audit_key_count": 174,
+      "prior_input_fingerprint_count": 109,
+      "same_keys_as_previous_audit": false,
+      "key_and_fingerprint_overlap_across_cohorts": 0,
+      "fingerprint_commitment": "98976f4ab98704ed484b415d174bc0a2c3484cb38274bbc02c2cb5dd278c6a92"
+    }
+  },
+  "sha256": {
+    "freeze": "8a6a0726e35d3824a21b0702ca0030592e2f5f6f6a28f710e176634d3a5c3bef",
+    "report": "8440ceb9f1233c0a768a35fc7243928f6d62cce1b837235e9d55247a65bd830a",
+    "repeat": "6d0d8144bc9bad11c6dc5ed481f568b682480ea6bb7a0c04fb4f7524fd6bd005"
+  },
+  "first_total_wall_seconds": 137.3558503750246,
+  "repeat_total_wall_seconds": 136.37756074999925
+}

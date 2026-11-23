@@ -1,0 +1,27 @@
+{
+  "status": "VERIFIED",
+  "calibration_and_test_trajectory_arms": 472,
+  "max_absolute_width_delta": 2.1316282072803006e-14,
+  "manifest_sha256": "f60e83a0009a155a249d7bf47da30cfd6068c7cbcbae696868eaa1219266d5bd",
+  "audit_and_g1_results_identical": true,
+  "freeze_sha256": "fa4ec041ac662612933dffe00207bb0701fc33b6de61f17a625877e5c3af0087",
+  "changed_published_threshold_rejected": true,
+  "test_suite": "102 passed",
+  "lint": "passed",
+  "evidence_directory": "source/data/p2_g1_rehearsal",
+  "published_report_sha256": "2b0034303d209b3a4dd44e0d04b61cafbd6d1029e056ee9893d9966837ed552e",
+  "beta_binomial_exact_check": {
+    "n_cal": 29,
+    "rank": 27,
+    "n_test": 30,
+    "marginal_central_95_count_quantiles": [
+      22,
+      30
+    ],
+    "actual_marginal_count_interval_probability": 0.9759367096610579,
+    "eight_cell_bonferroni_reference_count_quantiles": [
+      19,
+      30
+    ]
+  }
+}

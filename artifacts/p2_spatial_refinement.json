@@ -1,0 +1,459 @@
+{
+  "intended_use": "paired spatial refinement of the same ten engineering pilot trajectories",
+  "reproduce_from_workspace_root": [
+    "uv venv --no-project --python 3.12.8 /tmp/horizon-g0",
+    "uv pip install --python /tmp/horizon-g0/bin/python -r source/requirements-g0.lock",
+    "PYTHONPATH=source/src /tmp/horizon-g0/bin/python source/scripts/02_audit_p2_refinement.py --out /tmp/horizon-p2-refinement-repeat.json"
+  ],
+  "environment_lock": "source/requirements-g0.lock",
+  "engineering_interpretation": "Use 1024 cells and 20 substeps as the provisional setting for further paired pilot work, with 2048 cells as the comparison grid. Assess the final resolution against the calibrated T-data-2 criterion.",
+  "python": "3.12.8",
+  "backend": "cpu",
+  "versions": {
+    "exponax": "0.2.1",
+    "jax": "0.12.0.1",
+    "jaxlib": "0.12.0.1",
+    "numpy": "2.5.0",
+    "pyarrow": "24.0.0"
+  },
+  "config": {
+    "namespace": "engineering_pilot",
+    "master_seed": 20261104,
+    "grid": 256,
+    "solver_grid": 512,
+    "substeps": 10,
+    "steps": 200,
+    "domain_extent": 1.0,
+    "macro_dt": 0.005,
+    "nu_low": 0.0005,
+    "nu_high": 0.005,
+    "slope_mean": 3.0,
+    "slope_std": 0.5,
+    "max_mode": 8,
+    "amplitude_low": 0.5,
+    "amplitude_high": 1.0
+  },
+  "seed_mapping": "fold_in(fold_in(PRNGKey(master_seed), 1345474609), trajectory_id)",
+  "verified_original_fields_and_audit_bitwise": true,
+  "comparison_grid": 256,
+  "matched_substeps": 80,
+  "time_control_substeps": [
+    20,
+    80
+  ],
+  "error_definition": "maximum absolute projected difference over macro-steps and cells",
+  "solve_seconds_relative_to_512_10": {
+    "512/10": 1.0,
+    "512/20": 1.9295358975074852,
+    "512/80": 8.235139925724122,
+    "1024/20": 4.078663524352156,
+    "1024/80": 16.247221620671727,
+    "2048/20": 8.426645411275526,
+    "2048/80": 34.479631306812124
+  },
+  "timings": {
+    "512/10": {
+      "solver_grid": 512,
+      "substeps": 10,
+      "solver_dt": 0.0005,
+      "batch": 10,
+      "compile_seconds": 0.4730844579753466,
+      "solve_seconds": 0.20724558300571516,
+      "trajectories_per_second": 48.251933068818325
+    },
+    "512/20": {
+      "solver_grid": 512,
+      "substeps": 20,
+      "solver_dt": 0.00025,
+      "batch": 10,
+      "compile_seconds": 0.41614683298394084,
+      "solve_seconds": 0.3998877920093946,
+      "trajectories_per_second": 25.007014967251283
+    },
+    "512/80": {
+      "solver_grid": 512,
+      "substeps": 80,
+      "solver_dt": 6.25e-05,
+      "batch": 10,
+      "compile_seconds": 0.39772037498187274,
+      "solve_seconds": 1.7066963750403374,
+      "trajectories_per_second": 5.859273006168805
+    },
+    "1024/20": {
+      "solver_grid": 1024,
+      "substeps": 20,
+      "solver_dt": 0.00025,
+      "batch": 10,
+      "compile_seconds": 0.4259179169894196,
+      "solve_seconds": 0.8452849999885075,
+      "trajectories_per_second": 11.830329415683421
+    },
+    "1024/80": {
+      "solver_grid": 1024,
+      "substeps": 80,
+      "solver_dt": 6.25e-05,
+      "batch": 10,
+      "compile_seconds": 0.4196552920038812,
+      "solve_seconds": 3.3671649169991724,
+      "trajectories_per_second": 2.96985750520115
+    },
+    "2048/20": {
+      "solver_grid": 2048,
+      "substeps": 20,
+      "solver_dt": 0.00025,
+      "batch": 10,
+      "compile_seconds": 0.4342242080019787,
+      "solve_seconds": 1.746385041042231,
+      "trajectories_per_second": 5.726114095681939
+    },
+    "2048/80": {
+      "solver_grid": 2048,
+      "substeps": 80,
+      "solver_dt": 6.25e-05,
+      "batch": 10,
+      "compile_seconds": 0.4225917090079747,
+      "solve_seconds": 7.145751292002387,
+      "trajectories_per_second": 1.399432976514607
+    }
+  },
+  "worst_cases": {
+    "space_512_1024": {
+      "trajectory_id": 22,
+      "nu": 0.0007533711133528225,
+      "peak_error": 0.03010381783877314,
+      "macro_step": 9,
+      "cell": 73
+    },
+    "space_1024_2048": {
+      "trajectory_id": 99,
+      "nu": 0.000575074138898512,
+      "peak_error": 0.0008298152268815251,
+      "macro_step": 15,
+      "cell": 147
+    },
+    "time_512": {
+      "trajectory_id": 99,
+      "nu": 0.000575074138898512,
+      "peak_error": 1.705600690726783e-05,
+      "macro_step": 10,
+      "cell": 152
+    },
+    "time_1024": {
+      "trajectory_id": 99,
+      "nu": 0.000575074138898512,
+      "peak_error": 2.0849226363583995e-05,
+      "macro_step": 11,
+      "cell": 150
+    },
+    "time_2048": {
+      "trajectory_id": 99,
+      "nu": 0.000575074138898512,
+      "peak_error": 2.0605615886015727e-05,
+      "macro_step": 11,
+      "cell": 150
+    }
+  },
+  "spatial_peak_decreased_count": 10,
+  "trajectories": [
+    {
+      "trajectory_id": 0,
+      "nu": 0.0030380982808583907,
+      "space_512_1024": {
+        "peak_error": 9.779531126019592e-07,
+        "macro_step": 19,
+        "cell": 208
+      },
+      "space_1024_2048": {
+        "peak_error": 3.0531133177191805e-15,
+        "macro_step": 18,
+        "cell": 207
+      },
+      "time_512": {
+        "peak_error": 2.7093122412225057e-08,
+        "macro_step": 24,
+        "cell": 208
+      },
+      "time_1024": {
+        "peak_error": 2.7065976349049947e-08,
+        "macro_step": 24,
+        "cell": 208
+      },
+      "time_2048": {
+        "peak_error": 2.7065976349049947e-08,
+        "macro_step": 24,
+        "cell": 208
+      },
+      "spatial_peak_decreased": true
+    },
+    {
+      "trajectory_id": 11,
+      "nu": 0.0036013016975164386,
+      "space_512_1024": {
+        "peak_error": 2.1515786929882097e-09,
+        "macro_step": 57,
+        "cell": 51
+      },
+      "space_1024_2048": {
+        "peak_error": 9.71445146547012e-16,
+        "macro_step": 75,
+        "cell": 53
+      },
+      "time_512": {
+        "peak_error": 1.5269385755800613e-09,
+        "macro_step": 52,
+        "cell": 51
+      },
+      "time_1024": {
+        "peak_error": 1.52692003485555e-09,
+        "macro_step": 52,
+        "cell": 51
+      },
+      "time_2048": {
+        "peak_error": 1.5269205899670624e-09,
+        "macro_step": 52,
+        "cell": 51
+      },
+      "spatial_peak_decreased": true
+    },
+    {
+      "trajectory_id": 22,
+      "nu": 0.0007533711133528225,
+      "space_512_1024": {
+        "peak_error": 0.03010381783877314,
+        "macro_step": 9,
+        "cell": 73
+      },
+      "space_1024_2048": {
+        "peak_error": 0.000526772393303343,
+        "macro_step": 9,
+        "cell": 74
+      },
+      "time_512": {
+        "peak_error": 2.3617877040749136e-06,
+        "macro_step": 7,
+        "cell": 75
+      },
+      "time_1024": {
+        "peak_error": 2.638722218950562e-06,
+        "macro_step": 8,
+        "cell": 72
+      },
+      "time_2048": {
+        "peak_error": 2.3433280946782986e-06,
+        "macro_step": 8,
+        "cell": 72
+      },
+      "spatial_peak_decreased": true
+    },
+    {
+      "trajectory_id": 33,
+      "nu": 0.0032877328405703675,
+      "space_512_1024": {
+        "peak_error": 9.76322814261188e-10,
+        "macro_step": 34,
+        "cell": 100
+      },
+      "space_1024_2048": {
+        "peak_error": 6.522560269672795e-16,
+        "macro_step": 144,
+        "cell": 112
+      },
+      "time_512": {
+        "peak_error": 4.0013391489068795e-09,
+        "macro_step": 32,
+        "cell": 98
+      },
+      "time_1024": {
+        "peak_error": 4.00129407385208e-09,
+        "macro_step": 32,
+        "cell": 98
+      },
+      "time_2048": {
+        "peak_error": 4.001294295896685e-09,
+        "macro_step": 32,
+        "cell": 98
+      },
+      "spatial_peak_decreased": true
+    },
+    {
+      "trajectory_id": 44,
+      "nu": 0.0012799020909464022,
+      "space_512_1024": {
+        "peak_error": 1.5548210049676214e-05,
+        "macro_step": 56,
+        "cell": 122
+      },
+      "space_1024_2048": {
+        "peak_error": 6.938782881604766e-12,
+        "macro_step": 56,
+        "cell": 122
+      },
+      "time_512": {
+        "peak_error": 2.220123962448639e-08,
+        "macro_step": 64,
+        "cell": 120
+      },
+      "time_1024": {
+        "peak_error": 2.2148661016352378e-08,
+        "macro_step": 64,
+        "cell": 120
+      },
+      "time_2048": {
+        "peak_error": 2.214866479111066e-08,
+        "macro_step": 64,
+        "cell": 120
+      },
+      "spatial_peak_decreased": true
+    },
+    {
+      "trajectory_id": 55,
+      "nu": 0.0021460312688428556,
+      "space_512_1024": {
+        "peak_error": 2.7577004482193246e-05,
+        "macro_step": 38,
+        "cell": 33
+      },
+      "space_1024_2048": {
+        "peak_error": 1.3233747431229403e-11,
+        "macro_step": 38,
+        "cell": 33
+      },
+      "time_512": {
+        "peak_error": 1.1880234129790779e-07,
+        "macro_step": 38,
+        "cell": 34
+      },
+      "time_1024": {
+        "peak_error": 1.18782919056315e-07,
+        "macro_step": 38,
+        "cell": 34
+      },
+      "time_2048": {
+        "peak_error": 1.1878295147482731e-07,
+        "macro_step": 38,
+        "cell": 34
+      },
+      "spatial_peak_decreased": true
+    },
+    {
+      "trajectory_id": 66,
+      "nu": 0.0017859811573593526,
+      "space_512_1024": {
+        "peak_error": 0.0006849367171222198,
+        "macro_step": 21,
+        "cell": 255
+      },
+      "space_1024_2048": {
+        "peak_error": 3.71219115447019e-08,
+        "macro_step": 20,
+        "cell": 253
+      },
+      "time_512": {
+        "peak_error": 6.463590671579311e-07,
+        "macro_step": 25,
+        "cell": 254
+      },
+      "time_1024": {
+        "peak_error": 6.477863061515876e-07,
+        "macro_step": 25,
+        "cell": 254
+      },
+      "time_2048": {
+        "peak_error": 6.478134590981455e-07,
+        "macro_step": 25,
+        "cell": 254
+      },
+      "spatial_peak_decreased": true
+    },
+    {
+      "trajectory_id": 77,
+      "nu": 0.003108502151646524,
+      "space_512_1024": {
+        "peak_error": 1.4106372825395397e-07,
+        "macro_step": 34,
+        "cell": 50
+      },
+      "space_1024_2048": {
+        "peak_error": 6.661338147750939e-16,
+        "macro_step": 17,
+        "cell": 32
+      },
+      "time_512": {
+        "peak_error": 3.873469034409993e-08,
+        "macro_step": 31,
+        "cell": 46
+      },
+      "time_1024": {
+        "peak_error": 3.8724494055841774e-08,
+        "macro_step": 31,
+        "cell": 46
+      },
+      "time_2048": {
+        "peak_error": 3.872449427788638e-08,
+        "macro_step": 31,
+        "cell": 46
+      },
+      "spatial_peak_decreased": true
+    },
+    {
+      "trajectory_id": 88,
+      "nu": 0.0033221046307168973,
+      "space_512_1024": {
+        "peak_error": 9.45059829338124e-07,
+        "macro_step": 31,
+        "cell": 26
+      },
+      "space_1024_2048": {
+        "peak_error": 3.4139358007223564e-15,
+        "macro_step": 147,
+        "cell": 32
+      },
+      "time_512": {
+        "peak_error": 1.9263711292794028e-08,
+        "macro_step": 22,
+        "cell": 27
+      },
+      "time_1024": {
+        "peak_error": 1.9261147565785564e-08,
+        "macro_step": 22,
+        "cell": 27
+      },
+      "time_2048": {
+        "peak_error": 1.926114745476326e-08,
+        "macro_step": 22,
+        "cell": 27
+      },
+      "spatial_peak_decreased": true
+    },
+    {
+      "trajectory_id": 99,
+      "nu": 0.000575074138898512,
+      "space_512_1024": {
+        "peak_error": 0.02950079525130933,
+        "macro_step": 15,
+        "cell": 146
+      },
+      "space_1024_2048": {
+        "peak_error": 0.0008298152268815251,
+        "macro_step": 15,
+        "cell": 147
+      },
+      "time_512": {
+        "peak_error": 1.705600690726783e-05,
+        "macro_step": 10,
+        "cell": 152
+      },
+      "time_1024": {
+        "peak_error": 2.0849226363583995e-05,
+        "macro_step": 11,
+        "cell": 150
+      },
+      "time_2048": {
+        "peak_error": 2.0605615886015727e-05,
+        "macro_step": 11,
+        "cell": 150
+      },
+      "spatial_peak_decreased": true
+    }
+  ]
+}

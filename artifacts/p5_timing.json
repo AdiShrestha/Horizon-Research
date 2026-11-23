@@ -1,0 +1,21 @@
+{
+  "status": "measured",
+  "intended_use": "synthetic P5-shaped timing fixture only",
+  "backend": "cpu",
+  "dtype": "float64",
+  "trajectories": 100,
+  "batch_size": 5,
+  "solver_grid": 128,
+  "output_grid": 64,
+  "horizon": 100,
+  "substeps": 5,
+  "macro_dt": 0.01,
+  "domain_extent": 6.283185307179586,
+  "diffusivity": 0.001,
+  "drag": -0.1,
+  "forcing_mode": 4,
+  "compile_seconds": 0.25021241599461064,
+  "generate_seconds": 23.01348041696474,
+  "trajectories_per_second": 4.345279296663162,
+  "max_absolute_vorticity": 4.503833018642971
+}
