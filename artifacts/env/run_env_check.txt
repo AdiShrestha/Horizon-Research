@@ -1,0 +1,6 @@
+python 3.12.8 arm64 27.2.1
+torch 2.15.0 mps_built True mps_available True
+mps tensor ok 4.0
+jax 0.12.0.1 backend cpu x64 True float64
+exponax import ok
+safetensors 0.8.0 sklearn 1.9.0 pytest 9.1.1 hypothesis 6.170.15
