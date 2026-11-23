@@ -1,0 +1,116 @@
+{
+  "rule": "A06: adopt the fastest configuration whose 50-epoch validation loss is within 10% of batch 64 (same schedule shape); peak lr x sqrt(B/64), cap 3e-3",
+  "measurements": [
+    {
+      "device": "mps",
+      "batch": 64,
+      "peak_lr": 0.001,
+      "seconds_per_epoch": [
+        49.50839737500064,
+        48.92107870899781,
+        55.22367395799665
+      ],
+      "median": 49.50839737500064,
+      "batches_per_epoch": 2813
+    },
+    {
+      "device": "mps",
+      "batch": 256,
+      "peak_lr": 0.002,
+      "seconds_per_epoch": [
+        61.27200041600008,
+        58.49844770899654,
+        55.97775008300232
+      ],
+      "median": 58.49844770899654,
+      "batches_per_epoch": 704
+    },
+    {
+      "device": "mps",
+      "batch": 1024,
+      "peak_lr": 0.003,
+      "seconds_per_epoch": [
+        56.68552362500486,
+        56.32580108300317,
+        55.51748624999891
+      ],
+      "median": 56.32580108300317,
+      "batches_per_epoch": 176
+    },
+    {
+      "device": "cpu",
+      "batch": 64,
+      "peak_lr": 0.001,
+      "seconds_per_epoch": [
+        467.6715927920013,
+        461.7700428750031,
+        481.3939391659951
+      ],
+      "median": 467.6715927920013,
+      "batches_per_epoch": 2813
+    },
+    {
+      "device": "cpu",
+      "batch": 256,
+      "peak_lr": 0.002,
+      "seconds_per_epoch": [
+        459.2172208330012,
+        465.3409445830039,
+        458.425327459001
+      ],
+      "median": 459.2172208330012,
+      "batches_per_epoch": 704
+    },
+    {
+      "device": "cpu",
+      "batch": 1024,
+      "peak_lr": 0.003,
+      "seconds_per_epoch": [
+        502.187145625001,
+        525.7861774999983,
+        558.6336341669958
+      ],
+      "median": 525.7861774999983,
+      "batches_per_epoch": 176
+    }
+  ],
+  "fastest": {
+    "device": "mps",
+    "batch": 64,
+    "median": 49.50839737500064
+  },
+  "fifty_epoch_comparison": "not run: the fastest measured configuration is batch 64 itself, so the rule adopts it without a comparison",
+  "adopted": {
+    "device": "mps",
+    "batch": 64,
+    "peak_lr": 0.001
+  },
+  "device_cross_check": {
+    "mode": "crosscheck",
+    "gpu": "mps",
+    "steps": {
+      "1": {
+        "output_rel_l2": 8.039903281007759e-08,
+        "loss_cpu": 1.04872727394104,
+        "loss_gpu": 1.04872727394104,
+        "loss_rel_diff": 0.0
+      },
+      "50": {
+        "output_rel_l2": 3.048781771447623e-07,
+        "loss_cpu": 0.6394309997558594,
+        "loss_gpu": 0.6394309997558594,
+        "loss_rel_diff": 0.0
+      },
+      "200": {
+        "output_rel_l2": 5.580428828454777e-07,
+        "loss_cpu": 0.08988058567047119,
+        "loss_gpu": 0.08988057076931,
+        "loss_rel_diff": 1.6578843008967165e-07
+      }
+    },
+    "step1_tolerance": 1e-05,
+    "step1_pass": true
+  },
+  "command": "artifacts/emulators/p2/run_throughput.sh (scripts/05_throughput.py), caffeinate -dims, commit 1e34e4d plus uncommitted refactor",
+  "interpreter": ".venv-run/bin/python (CPython 3.12.8, torch 2.15.0)"
+}

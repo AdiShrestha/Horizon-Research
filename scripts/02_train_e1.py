@@ -15,7 +15,7 @@ Fixed before the first run:
 - Acceptance check after training: T-step rollout from the 100 validation initial states, count
   of non-finite values; relative L2 and sup-norm error (physical and relative to sup |u_t|).
 Eager float32 on MPS; no compile, no autocast. Atomic checkpoints every 10 epochs and on SIGINT or
-SIGTERM; resumes from <out>/last.pt.
+SIGTERM; resumes from <out>/last.safetensors + last_state.json (no pickle).
 """
 
 from __future__ import annotations
@@ -38,12 +38,25 @@ import numpy as np  # noqa: E402
 import polars as pl  # noqa: E402
 import torch  # noqa: E402
 
+from trajcp.emulators.checkpoint import load_state, save_state  # noqa: E402
+from trajcp.emulators.e1 import (  # noqa: E402
+    BATCH,
+    BETAS,
+    FLOOR_LR,
+    LAYERS,
+    MODES,
+    PEAK_LR,
+    WARMUP,
+    WEIGHT_DECAY,
+    WIDTH,
+    build_model,
+    make_optimizer,
+    train_epoch,
+)
 from trajcp.emulators.fno import FNO  # noqa: E402
 from trajcp.emulators.training import (  # noqa: E402
     Normalization,
     atomic_safetensors,
-    atomic_torch_save,
-    learning_rate,
     relative_l2,
     rollout,
     rollout_error_summary,
@@ -51,8 +64,6 @@ from trajcp.emulators.training import (  # noqa: E402
     tail_criterion,
 )
 
-WIDTH, MODES, LAYERS = 64, 16, 4
-PEAK_LR, FLOOR_LR, WARMUP, WEIGHT_DECAY, BETAS, BATCH = 1e-3, 1e-6, 5, 1e-4, (0.9, 0.99), 64
 VALIDATE_EVERY, CHECKPOINT_EVERY, VALIDATION_FRACTION = 5, 10, 0.1
 
 stop_requested = False
@@ -74,14 +85,10 @@ def code_version() -> dict[str, object]:
 
     return {
         "commit": git("rev-parse", "HEAD"),
-        "dirty": bool(git("status", "--porcelain", "--untracked-files=no", "src", "scripts")),
+        "dirty": bool(
+            git("status", "--porcelain", "--untracked-files=no", "src", "scripts")
+        ),
     }
-
-
-def build_model() -> FNO:
-    return FNO(
-        1, in_channels=2, out_channels=1, width=WIDTH, modes=MODES, layers=LAYERS, cond_dim=1
-    )
 
 
 @torch.no_grad()
@@ -114,11 +121,15 @@ def rollout_check(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    parser.add_argument("--data", type=Path, required=True, help="directory with train.npy")
+    parser.add_argument(
+        "--data", type=Path, required=True, help="directory with train.npy"
+    )
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--seed", type=int, required=True)
     parser.add_argument("--epochs", type=int, default=500)
     parser.add_argument("--device", default="mps")
+    parser.add_argument("--batch", type=int, default=BATCH)
+    parser.add_argument("--peak-lr", type=float, default=PEAK_LR)
     args = parser.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
     device = torch.device(args.device)
@@ -134,8 +145,6 @@ def main() -> None:
     u_val = torch.from_numpy(np.ascontiguousarray(raw[n_fit:])).to(device)
     mu_fit = torch.tensor(mu_all[:n_fit], dtype=torch.float32, device=device)
     mu_val = torch.tensor(mu_all[n_fit:], dtype=torch.float32, device=device)
-    steps = raw.shape[1] - 1
-    pairs = n_fit * steps
     version = code_version()
     settings = {
         "code": version,
@@ -153,19 +162,24 @@ def main() -> None:
             "cond": "log nu, channel + FiLM",
         },
         "optimizer": {"name": "AdamW", "betas": BETAS, "weight_decay": WEIGHT_DECAY},
-        "lr": {"peak": PEAK_LR, "floor": FLOOR_LR, "warmup": WARMUP, "schedule": "cosine per step"},
-        "batch": BATCH,
+        "lr": {
+            "peak": args.peak_lr,
+            "floor": FLOOR_LR,
+            "warmup": WARMUP,
+            "schedule": "cosine per step",
+        },
+        "batch": args.batch,
         "device": str(device),
         "torch": torch.__version__,
-        "data_sha256": json.loads((args.data / "train_settings.json").read_text())["sha256"],
+        "data_sha256": json.loads((args.data / "train_settings.json").read_text())[
+            "sha256"
+        ],
     }
     (args.out / "settings.json").write_text(json.dumps(settings, indent=2))
 
     torch.manual_seed(args.seed)
     model = build_model().to(device)
-    optimizer = torch.optim.AdamW(
-        model.parameters(), lr=PEAK_LR, betas=BETAS, weight_decay=WEIGHT_DECAY
-    )
+    optimizer = make_optimizer(model)
     curves: dict[str, list] = {
         "epoch": [],
         "train_loss": [],
@@ -178,11 +192,8 @@ def main() -> None:
     start_epoch = 0
     elapsed_before = 0.0
     resumes: list[int] = []
-    last = args.out / "last.pt"
-    if last.exists():
-        state = torch.load(last, map_location="cpu", weights_only=False)
-        model.load_state_dict(state["model"])
-        optimizer.load_state_dict(state["optimizer"])
+    state = load_state(args.out, model, optimizer, device)
+    if state is not None:
         curves, best, start_epoch = state["curves"], state["best"], state["epoch"]
         elapsed_before = state.get("elapsed", 0.0)
         resumes = [*state.get("resumes", []), start_epoch]
@@ -193,49 +204,36 @@ def main() -> None:
         return elapsed_before + time.perf_counter() - clock
 
     def checkpoint(epoch: int) -> None:
-        atomic_torch_save(
+        save_state(
+            args.out,
+            model,
+            optimizer,
             {
-                "model": {k: v.cpu() for k, v in model.state_dict().items()},
-                "optimizer": optimizer.state_dict(),
                 "curves": curves,
                 "best": best,
                 "epoch": epoch,
                 "elapsed": elapsed(),
                 "resumes": resumes,
             },
-            last,
         )
         (args.out / "curves.json").write_text(json.dumps(curves))
 
     signal.signal(signal.SIGINT, request_stop)
     signal.signal(signal.SIGTERM, request_stop)
-    batches = (pairs + BATCH - 1) // BATCH
     for epoch in range(start_epoch, args.epochs):
-        order = torch.randperm(
-            pairs, generator=torch.Generator().manual_seed(args.seed * 100_003 + epoch)
+        mean_loss, _ = train_epoch(
+            model,
+            optimizer,
+            u_fit,
+            mu_fit,
+            norm,
+            epoch=epoch,
+            total_epochs=args.epochs,
+            seed=args.seed,
+            batch=args.batch,
+            peak_lr=args.peak_lr,
+            stop=lambda: stop_requested,
         )
-        order = order.to(device)
-        total = torch.zeros((), device=device)
-        for b in range(batches):
-            for group in optimizer.param_groups:
-                group["lr"] = learning_rate(
-                    epoch + b / batches,
-                    peak=PEAK_LR,
-                    floor=FLOOR_LR,
-                    warmup=WARMUP,
-                    total=args.epochs,
-                )
-            idx = order[b * BATCH : (b + 1) * BATCH]
-            traj, t = idx // steps, idx % steps
-            cur, nxt = u_fit[traj, t], u_fit[traj, t + 1]
-            x, c = step_inputs(cur, mu_fit[traj], norm)
-            loss = relative_l2(model(x, c)[:, 0], (nxt - cur) / norm.increment_sd).mean()
-            optimizer.zero_grad(set_to_none=True)
-            loss.backward()
-            optimizer.step()
-            total += loss.detach()
-            if stop_requested:
-                break
         if stop_requested:
             checkpoint(epoch)  # the interrupted epoch is repeated on resume
             raise SystemExit(f"stopped during epoch {epoch + 1}; checkpoint saved")
@@ -243,7 +241,7 @@ def main() -> None:
         if done % VALIDATE_EVERY == 0 or done == args.epochs:
             metrics = validate(model, u_val, mu_val, norm)
             curves["epoch"].append(done)
-            curves["train_loss"].append(float(total) / batches)
+            curves["train_loss"].append(mean_loss)
             curves["val_loss"].append(metrics["val_loss"])
             curves["val_state_rel_l2"].append(metrics["val_state_rel_l2"])
             curves["seconds"].append(elapsed())
@@ -255,10 +253,14 @@ def main() -> None:
                 atomic_safetensors(
                     model,
                     args.out / "best.safetensors",
-                    {"epoch": str(done), "val_loss": repr(best), "seed": str(args.seed)},
+                    {
+                        "epoch": str(done),
+                        "val_loss": repr(best),
+                        "seed": str(args.seed),
+                    },
                 )
             print(
-                f"epoch {done} train {float(total) / batches:.4e} val {metrics['val_loss']:.4e} "
+                f"epoch {done} train {mean_loss:.4e} val {metrics['val_loss']:.4e} "
                 f"state {metrics['val_state_rel_l2']:.3e} {elapsed():.0f}s",
                 flush=True,
             )

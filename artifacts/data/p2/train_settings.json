@@ -1,0 +1,29 @@
+{
+  "split": "train",
+  "stream": "TRAIN",
+  "master_seed": 20261104,
+  "task": "p2",
+  "n": 1000,
+  "extent": 1.0,
+  "macro_dt": 0.01,
+  "steps": 200,
+  "solver_grid": 1024,
+  "emulator_grid": 256,
+  "substeps": 26,
+  "courant": 0.2,
+  "scheme": "ETDRK4 conservative, 2/3 dealiasing",
+  "amplitude": 0.5,
+  "nu_range": [
+    0.00175,
+    0.005
+  ],
+  "dtype_solver": "float64",
+  "dtype_store": "float32",
+  "versions": {
+    "exponax": "0.2.1",
+    "jax": "0.12.0.1",
+    "numpy": "2.5.0"
+  },
+  "seconds": 72.88648858299712,
+  "sha256": "213ec884669d4fb464e6f6bce1021d7e60cfa7bf5d20a6bddd11aefa7733093f"
+}

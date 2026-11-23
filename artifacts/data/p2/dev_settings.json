@@ -1,0 +1,29 @@
+{
+  "split": "dev",
+  "stream": "DEV",
+  "master_seed": 20261105,
+  "task": "p2",
+  "n": 1500,
+  "extent": 1.0,
+  "macro_dt": 0.01,
+  "steps": 200,
+  "solver_grid": 1024,
+  "emulator_grid": 256,
+  "substeps": 26,
+  "courant": 0.2,
+  "scheme": "ETDRK4 conservative, 2/3 dealiasing",
+  "amplitude": 0.5,
+  "nu_range": [
+    0.00175,
+    0.005
+  ],
+  "dtype_solver": "float64",
+  "dtype_store": "float32",
+  "versions": {
+    "exponax": "0.2.1",
+    "jax": "0.12.0.1",
+    "numpy": "2.5.0"
+  },
+  "seconds": 73.99808174999635,
+  "sha256": "58ede415ca0962d66ab954cef69a7d35add31b047d63c0dffad5b230b18863e9"
+}

@@ -1,0 +1,71 @@
+{
+  "split": "dev",
+  "stream": "DEV",
+  "master_seed": 20261105,
+  "task": "p1",
+  "n": 1500,
+  "extent": 1.0,
+  "macro_dt": 0.01,
+  "steps": 500,
+  "emulator_grid": 256,
+  "solver": "exact Fourier multiplier, float64",
+  "amplitude": 1.0,
+  "c_range": [
+    0.5,
+    1.5
+  ],
+  "nu_range": [
+    0.0002,
+    0.001
+  ],
+  "delta_range": [
+    1e-05,
+    0.0001
+  ],
+  "dtype_store": "float32",
+  "versions": {
+    "jax": "0.12.0.1",
+    "numpy": "2.5.0"
+  },
+  "seconds": 4.8669009169971105,
+  "sha256": "34822cf4ce921a694c9aae5e77b6f373108002711eb61af19226d1b0cc658f6b",
+  "checks": {
+    "finite": true,
+    "ranges": {
+      "c": [
+        0.5004783914640465,
+        1.4998249794005656
+      ],
+      "nu": [
+        0.00020011912477875597,
+        0.0009990787261687619
+      ],
+      "delta": [
+        1.001287765443063e-05,
+        9.987610383633095e-05
+      ]
+    },
+    "slope_mean": 3.002823661356288,
+    "slope_sd": 0.49469280190951437,
+    "max_abs_spatial_mean": 5.960464477539063e-08,
+    "decay_end_min": 0.293211877870382,
+    "decay_end_median": 0.8442501213081341,
+    "decay_mid_min": 0.4298119386811397,
+    "below_decay_flag": 0,
+    "spearman": {
+      "c~log_nu": -0.006429609968715541,
+      "c~log_delta": 0.0004062401805511914,
+      "c~slope": 0.02492564307806359,
+      "c~ic_grad_l2": -0.011042856463491763,
+      "c~ic_spec_centroid": -0.012097822265698787,
+      "log_nu~log_delta": -0.011662774961233316,
+      "log_nu~slope": 0.0738895119508942,
+      "log_nu~ic_grad_l2": 0.0017863759050559581,
+      "log_nu~ic_spec_centroid": 0.006037616905607514,
+      "log_delta~slope": 0.014562065138695618,
+      "log_delta~ic_grad_l2": -0.030024816899918625,
+      "log_delta~ic_spec_centroid": -0.038463128205834765
+    },
+    "max_abs_spearman": 0.0738895119508942
+  }
+}
