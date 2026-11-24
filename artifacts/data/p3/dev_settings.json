@@ -1,0 +1,47 @@
+{
+  "split": "dev",
+  "stream": "DEV",
+  "master_seed": 20261105,
+  "task": "p3",
+  "n": 1500,
+  "extent": 100.53096491487338,
+  "macro_dt": 0.2,
+  "substeps": 20,
+  "solver_step": 0.01,
+  "steps": 500,
+  "solver_grid": 512,
+  "emulator_grid": 256,
+  "scheme": "ETDRK4 KuramotoSivashinskyConservative, 2/3 dealiasing",
+  "nu4_range": [
+    0.9,
+    1.1
+  ],
+  "ic": "Fourier modes 1-8, slope N(3, 0.5^2), sup norm 1, then burn-in",
+  "burn_in_macro_steps": 800,
+  "burn_in_rule": "fallback",
+  "lambda_max": 0.08997717074323623,
+  "lambda_max_se": 0.0008673794481791096,
+  "tau_L": 11.113930252971107,
+  "horizon_in_tau_L": 8.997717074323623,
+  "dtype_solver": "float64",
+  "dtype_store": "float32",
+  "versions": {
+    "exponax": "0.2.1",
+    "jax": "0.12.0.1",
+    "numpy": "2.5.0"
+  },
+  "seconds": 397.91563312499784,
+  "sha256": "6d04f3eed790431b220df3b6b95d7405159a8a01446162c4e3d603c47638cabf",
+  "checks": {
+    "finite": true,
+    "nu4_observed": [
+      0.9004825454420663,
+      1.0999417559173859
+    ],
+    "max_abs_spatial_mean": 2.9802322387695312e-08,
+    "energy_mean_range": [
+      1.3770132570289864,
+      2.15082254990574
+    ]
+  }
+}

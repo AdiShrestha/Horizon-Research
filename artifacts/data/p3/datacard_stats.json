@@ -1,0 +1,38 @@
+{
+  "train": {
+    "finite": true,
+    "shape": [
+      1000,
+      501,
+      256
+    ],
+    "max_abs_mean": 2.9802322387695312e-08,
+    "decay_min": 0.7079148292541504,
+    "decay_median": 0.9878095388412476,
+    "nu4_min": 0.9000982048967601,
+    "nu4_max": 1.0998508019917934,
+    "slope_mean": 2.9779817711167365,
+    "slope_sd": 0.4990617291317218,
+    "spearman_nu4_slope": -0.043096243096243096,
+    "spearman_nu4_ic_grad_l2": -0.5815891855891856,
+    "spearman_nu4_ic_spec_centroid": -0.5086975846975847
+  },
+  "dev": {
+    "finite": true,
+    "shape": [
+      1500,
+      501,
+      256
+    ],
+    "max_abs_mean": 2.9802322387695312e-08,
+    "decay_min": 0.7448549866676331,
+    "decay_median": 0.9995827078819275,
+    "nu4_min": 0.9004825454420663,
+    "nu4_max": 1.0999417559173859,
+    "slope_mean": 3.0093508267008002,
+    "slope_sd": 0.5154773967624366,
+    "spearman_nu4_slope": 0.00871093720486098,
+    "spearman_nu4_ic_grad_l2": -0.6030483817992809,
+    "spearman_nu4_ic_spec_centroid": -0.5017250621000277
+  }
+}

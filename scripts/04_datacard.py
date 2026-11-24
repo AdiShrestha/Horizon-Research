@@ -33,7 +33,7 @@ def stats_for(directory: Path, split: str) -> dict[str, object]:
         "decay_min": float(decay.min()),
         "decay_median": float(np.median(decay)),
     }
-    param_cols = [c for c in ("nu", "c", "delta") if c in meta.columns]
+    param_cols = [c for c in ("nu", "c", "delta", "nu4") if c in meta.columns]
     for c in param_cols:
         out[f"{c}_min"], out[f"{c}_max"] = float(meta[c].min()), float(meta[c].max())
     if "slope" in meta.columns:
