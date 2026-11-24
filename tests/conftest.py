@@ -14,6 +14,7 @@ _NEEDS = {
     "test_mps.py": ("torch",),
     "test_checkpoint.py": ("torch", "safetensors"),
     "test_stage1.py": ("torch", "safetensors", "jax"),
+    "test_tiers.py": ("torch", "safetensors"),
     "test_oracles.py": ("mapie",),
 }
 

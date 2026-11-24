@@ -131,3 +131,43 @@ def benettin_lambda(
         total += np.log(sep / perturbation)
         v = u + (v - u) * (perturbation / sep)[:, None]
     return total / (n_ren * renorm)
+
+
+def _batched(extent: float, points: int, dt: float, nu4s: FloatArray, substeps: int):
+    """Equinox-vmapped steppers, one fourth-order coefficient per trajectory."""
+    import equinox as eqx
+
+    def make(nu4: jax.Array) -> ex.RepeatedStepper:
+        return ex.RepeatedStepper(make_stepper(extent, points, dt, nu4), substeps)
+
+    return eqx.filter_vmap(make)(jnp.asarray(nu4s, dtype=jnp.float64))
+
+
+def advance_many(
+    u: FloatArray, nu4s: FloatArray, extent: float, dt: float, steps: int
+) -> FloatArray:
+    """Like ``advance`` with one nu4 per trajectory: final state after ``steps`` solver steps."""
+    import equinox as eqx
+
+    steppers = _batched(extent, u.shape[-1], dt, nu4s, steps)
+    run = eqx.filter_jit(eqx.filter_vmap(lambda s, x: s(x)))
+    return np.asarray(run(steppers, jnp.asarray(u, dtype=jnp.float64)[:, None, :])[:, 0, :])
+
+
+def solve_many(
+    u0: FloatArray,
+    nu4s: FloatArray,
+    extent: float,
+    macro_dt: float,
+    steps: int,
+    substeps: int,
+) -> FloatArray:
+    """Like ``solve`` with one nu4 per trajectory; macro steps 0..steps."""
+    import equinox as eqx
+
+    steppers = _batched(extent, u0.shape[-1], macro_dt / substeps, nu4s, substeps)
+    run = eqx.filter_jit(
+        eqx.filter_vmap(lambda s, x: ex.rollout(s, steps, include_init=True)(x))
+    )
+    out = run(steppers, jnp.asarray(u0, dtype=jnp.float64)[:, None, :])
+    return np.asarray(out[:, :, 0, :], dtype=np.float64)

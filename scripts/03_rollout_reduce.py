@@ -1,4 +1,4 @@
-"""Stage 1 for a P2 DEV pool: roll out one emulator, reduce to sufficient statistics (IC-02 WP-E).
+"""Stage 1 for a task pool (P1-P3; tier runs from 02_train.py or the engineering E1 run): roll out one emulator, reduce to sufficient statistics (IC-02 WP-E).
 
 Writes <out>/stats.parquet, one row per trajectory with fixed-size float32 arrays of length T:
 M, u_l2, e_l2 and, for f in {w0, w3}: m_f, p{gamma}_f, wbar_f, wl2_f; plus index, nu, log_nu, phi(u0)
@@ -28,6 +28,8 @@ import numpy as np  # noqa: E402
 import polars as pl  # noqa: E402
 import torch  # noqa: E402
 
+from trajcp.emulators import device as dev  # noqa: E402
+from trajcp.emulators import tiers  # noqa: E402
 from trajcp.rollout import reduce as rd  # noqa: E402
 from trajcp.rollout import runner  # noqa: E402
 
@@ -75,20 +77,26 @@ def main() -> None:
     parser.add_argument("--device", default="cpu")
     parser.add_argument("--batch", type=int, default=64)
     parser.add_argument("--limit", type=int, default=None)
-    parser.add_argument("--steps", type=int, default=200)
+    parser.add_argument("--steps", type=int, default=None, help="default: the task horizon")
     parser.add_argument("--fields", action="store_true")
     parser.add_argument("--variants", action="store_true")
     parser.add_argument("--weights", default="best.safetensors")
     args = parser.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
+    dev.configure(args.device)
     model, norm, settings = runner.load_emulator(args.run, args.device, args.weights)
+    task = settings.get("task", "p2")
     raw = np.load(args.data / f"{args.split}.npy", mmap_mode="r")
     meta = pl.read_parquet(args.data / f"{args.split}_meta.parquet").sort("index")
     n = args.limit or raw.shape[0]
-    steps, points = args.steps, raw.shape[-1]
+    steps = args.steps or (tiers.TASKS[task].steps if "tier" in settings else 200)
+    points = raw.shape[-1]
     stream = meta["stream"][0]
     floor = 1e-6 * norm.state_sd
-    mu_all = (meta["log_nu"].to_numpy() - norm.mu_mean) / norm.mu_sd
+    if isinstance(norm, tiers.CondNormalization):
+        mu_all = norm.cond(np.stack([meta[c].to_numpy() for c in settings["cond"]], axis=1))
+    else:
+        mu_all = (meta["log_nu"].to_numpy() - norm.mu_mean) / norm.mu_sd
     err_store = w3_store = None
     if args.fields:
         (args.out / "fields").mkdir(exist_ok=True)
@@ -136,13 +144,13 @@ def main() -> None:
             key = (m_count, eps, kind)
             if key not in raw_cache:
                 xi = runner.perturbation_fields(
-                    stream, "p2", idx, m_count, points, kind=kind
+                    stream, task, idx, m_count, points, kind=kind
                 )
                 pert = runner.perturbed_initials(u[:, 0], xi, eps)
                 flat = runner.rollout(
                     model,
                     pert.reshape(-1, points),
-                    np.repeat(mu, m_count),
+                    np.repeat(mu, m_count, axis=0),
                     norm,
                     steps,
                     args.device,
@@ -171,7 +179,7 @@ def main() -> None:
                 model,
                 u[:, 0],
                 mu,
-                runner.perturbation_fields(stream, "p2", idx, 8, points),
+                runner.perturbation_fields(stream, task, idx, 8, points),
                 norm,
                 steps,
                 args.device,
@@ -186,8 +194,11 @@ def main() -> None:
     scalars = {
         "index": meta["index"].to_numpy()[sel],
         "stream": meta["stream"].to_numpy()[sel],
-        "nu": meta["nu"].to_numpy()[sel],
-        "log_nu": meta["log_nu"].to_numpy()[sel],
+        **{
+            c: meta[c].to_numpy()[sel]
+            for c in ("nu", "log_nu", "c", "delta", "log_delta", "nu4")
+            if c in meta.columns
+        },
         **{
             c: meta[c].to_numpy()[sel]
             for c in ("ic_l2", "ic_grad_l2", "ic_linf", "ic_spec_centroid")
@@ -210,6 +221,9 @@ def main() -> None:
         "interpreter": sys.executable,
         "code": git_commit(),
         "device": args.device,
+        "task": task,
+        "tier": settings.get("tier", "E1"),
+        "hardware": dev.describe(torch.device(args.device)),
         "torch": torch.__version__,
         "run": str(args.run),
         "weights": args.weights,

@@ -1,0 +1,17 @@
+{
+  "_comment": "Copy to cluster/cluster.json and edit for your university cluster. Every value is passed to sbatch as given; set a key to null to omit it.",
+  "partition": "gpu",
+  "cpu_partition": null,
+  "account": null,
+  "qos": null,
+  "gres": "gpu:1",
+  "constraint": null,
+  "cpus_per_task": 8,
+  "mem": "48G",
+  "time": {"train": "24:00:00", "stage1": "12:00:00", "gate": "00:20:00", "devcheck": "01:00:00", "w3cost": "01:00:00", "verify": "01:00:00"},
+  "exclusive_for": ["w3cost"],
+  "modules": [],
+  "python": ".venv-cluster/bin/python",
+  "requeue_on_timeout": true,
+  "max_parallel_jobs": null
+}

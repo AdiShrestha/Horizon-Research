@@ -17,15 +17,35 @@ import torch
 from safetensors.torch import load_file
 
 from trajcp.data.seeds import component_key, trajectory_key
+from trajcp.emulators import tiers
 from trajcp.emulators.e1 import build_model
 from trajcp.emulators.training import Normalization, predict_next
 
 
+def _step(model, state, m, norm):
+    """One emulator step for either run format: tier runs (A18) take a (b, k) parameter matrix and a
+    CondNormalization; engineering E1 runs take a (b,) parameter vector and a Normalization."""
+    if isinstance(norm, tiers.CondNormalization):
+        return tiers.step(model, state, m, norm)
+    return predict_next(model, state, m, norm)
+
+
 def load_emulator(run: Path, device: str, weights: str = "best.safetensors"):
-    """Model (eager float32, eval mode) and normalization of a trained E1 run directory."""
+    """Model (eager float32, eval mode) and normalization of a trained run directory: a tier run
+    written by scripts/02_train.py (settings carry "tier") or an engineering E1 run."""
     settings = json.loads((run / "settings.json").read_text())
-    norm = Normalization(**settings["normalization"])
-    model = build_model()
+    norm: tiers.CondNormalization | Normalization
+    model: torch.nn.Module
+    if "tier" in settings:
+        n = settings["normalization"]
+        norm = tiers.CondNormalization(
+            n["state_mean"], n["state_sd"], n["increment_sd"],
+            tuple(n["cond_mean"]), tuple(n["cond_sd"]),
+        )
+        model = tiers.build(settings["tier"], len(settings["cond"]))
+    else:
+        norm = Normalization(**settings["normalization"])
+        model = build_model()
     model.load_state_dict(load_file(str(run / weights)))
     return model.to(device).eval(), norm, settings
 
@@ -81,7 +101,7 @@ def rollout(
         m = torch.tensor(mu[sl], dtype=torch.float32, device=device)
         states = []
         for _ in range(steps):
-            state = predict_next(model, state, m, norm)
+            state = _step(model, state, m, norm)
             states.append(state)
         out[sl] = torch.stack(states, dim=1).cpu().numpy()
     return out
@@ -111,7 +131,7 @@ def jvp_sensitivity(
     def roll(state: torch.Tensor) -> torch.Tensor:
         states = []
         for _ in range(steps):
-            state = predict_next(model, state, m, norm)
+            state = _step(model, state, m, norm)
             states.append(state)
         return torch.stack(states, dim=1)
 
