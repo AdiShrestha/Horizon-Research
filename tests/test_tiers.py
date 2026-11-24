@@ -117,3 +117,37 @@ def test_unet_size_and_shape():
 def test_growth_slope_recovers_power_law():
     t = np.arange(1, 201, dtype=float)
     assert tiers.growth_slope(0.01 * t**1.5) == pytest.approx(1.5)
+
+
+def test_aux_tiers_train_and_wang_labels_are_fixed():
+    u, cond = _toy(n=6, steps=20, points=32)
+    norm = tiers.CondNormalization.from_training(u, cond)
+    ut = torch.from_numpy(u)
+    c = torch.tensor(norm.cond(cond), dtype=torch.float32)
+    a = tiers.wang_labels(ut, 0, norm.state_sd)
+    b = tiers.wang_labels(ut, 0, norm.state_sd)
+    assert torch.equal(a, b)
+    rel = float((a - ut).std() / norm.state_sd)
+    assert 0.04 < rel < 0.06
+    for tier, labels in (("E1D", None), ("E1W", a)):
+        torch.manual_seed(0)
+        model = tiers.build(tier, 1)
+        opt = tiers.make_optimizer(model, 1e-3)
+        loss, _, phase = tiers.train_epoch(
+            tier, model, opt, ut, c, norm, epoch=0, total_epochs=10, seed=0, peak_lr=1e-3,
+            batch=16, labels=labels,
+        )
+        assert phase == "one-step" and np.isfinite(loss)
+
+
+def test_dropout_zero_fno_is_the_e1_model():
+    torch.manual_seed(5)
+    a = tiers.build("E1", 2)
+    torch.manual_seed(5)
+    b = tiers.build("E1D", 2)
+    for x, y in zip(a.state_dict().values(), b.state_dict().values(), strict=True):
+        assert torch.equal(x, y)
+    b.eval()
+    x = torch.randn(3, 3, 64)
+    cc = torch.randn(3, 2)
+    assert torch.equal(a(x, cc), b(x, cc))

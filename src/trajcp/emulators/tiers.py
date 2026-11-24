@@ -30,9 +30,11 @@ from trajcp.emulators.training import learning_rate, relative_l2
 from trajcp.emulators.unet import UNet
 
 TIERS = ("E1", "E2", "E3")
+AUX_TIERS = ("E1D", "E1W")  # B10 E1-dropout, B15 E1-Wang label perturbation (brief §8.4)
+DROPOUT, WANG_SIGMA = 0.1, 0.05
 FNO_WIDTH, FNO_MODES, FNO_LAYERS = 64, 16, 4
 UNET_CHANNELS, UNET_BLOCKS = (32, 64, 96), 2
-PEAK_LR = {"E1": 1e-3, "E2": 3e-4, "E3": 1e-3}
+PEAK_LR = {"E1": 1e-3, "E2": 3e-4, "E3": 1e-3, "E1D": 1e-3, "E1W": 1e-3}
 FLOOR_LR, WARMUP, WEIGHT_DECAY, BETAS, BATCH = 1e-6, 5, 1e-4, (0.9, 0.99), 64
 E3_UNROLL, E3_WARM_FRACTION = 10, 0.1
 E2_PUSHFORWARD, E2_NOISE = 3, 1e-3
@@ -81,7 +83,7 @@ class CondNormalization:
 
 
 def build(tier: str, cond_dim: int) -> torch.nn.Module:
-    if tier in ("E1", "E3"):
+    if tier in ("E1", "E3", "E1D", "E1W"):
         return FNO(
             1,
             in_channels=1 + cond_dim,
@@ -90,6 +92,7 @@ def build(tier: str, cond_dim: int) -> torch.nn.Module:
             modes=FNO_MODES,
             layers=FNO_LAYERS,
             cond_dim=cond_dim,
+            dropout=DROPOUT if tier == "E1D" else 0.0,
         )
     if tier == "E2":
         return UNet(1, 1 + cond_dim, 1, UNET_CHANNELS, UNET_BLOCKS, cond_dim)
@@ -148,12 +151,15 @@ def train_epoch(
     batch: int = BATCH,
     stop: Callable[[], bool] = lambda: False,
     on_step: Callable[[int, torch.Tensor], None] | None = None,
+    labels: torch.Tensor | None = None,
 ) -> tuple[float, int, str]:
     """One epoch of the tier's training rule; returns (mean loss, optimizer steps, phase)."""
     device = u_fit.device
     n_traj, steps = u_fit.shape[0], u_fit.shape[1] - 1
     sd = norm.increment_sd
-    if tier == "E1" or (tier == "E3" and epoch < round(E3_WARM_FRACTION * total_epochs)):
+    if tier in ("E1", "E1D", "E1W") or (
+        tier == "E3" and epoch < round(E3_WARM_FRACTION * total_epochs)
+    ):
         phase, horizon = "one-step", 1
     elif tier == "E3":
         phase, horizon = "unroll", E3_UNROLL
@@ -177,7 +183,8 @@ def train_epoch(
         traj, t = idx // starts_per_traj, idx % starts_per_traj
         c = c_fit[traj]
         if phase == "one-step":
-            cur, nxt = u_fit[traj, t], u_fit[traj, t + 1]
+            cur = u_fit[traj, t]
+            nxt = (labels if labels is not None else u_fit)[traj, t + 1]
             loss = relative_l2(increment(model, cur, c, norm), (nxt - cur) / sd).mean()
         elif phase == "unroll":
             state = u_fit[traj, t]
@@ -259,3 +266,11 @@ def growth_slope(median_sup: np.ndarray, first: int = 10) -> float:
     if sel.sum() < 2:
         return float("nan")
     return float(np.polyfit(np.log(t[sel]), np.log(median_sup[sel]), 1)[0])
+
+
+def wang_labels(u_fit: torch.Tensor, seed: int, state_sd: float) -> torch.Tensor:
+    """B15 (E1-Wang): a fixed label-perturbed copy of D_fit, u + N(0, (0.05 state_sd)^2), drawn once
+    from a CPU generator so it is identical on every device; inputs stay unperturbed."""
+    gen = torch.Generator().manual_seed(seed * 100_003 + 15)
+    noise = torch.randn(u_fit.shape, generator=gen, dtype=torch.float32)
+    return u_fit + (WANG_SIGMA * state_sd) * noise.to(u_fit.device)

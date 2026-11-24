@@ -71,7 +71,7 @@ def load_task(data: Path, spec: tiers.TaskSpec):
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--task", choices=sorted(tiers.TASKS), required=True)
-    parser.add_argument("--tier", choices=tiers.TIERS, required=True)
+    parser.add_argument("--tier", choices=tiers.TIERS + tiers.AUX_TIERS, required=True)
     parser.add_argument("--seed", type=int, required=True)
     parser.add_argument("--epochs", type=int, default=None, help="budget; or use --budget-file")
     parser.add_argument("--budget-file", type=Path, default=None, help="A07 budget.json")
@@ -98,10 +98,12 @@ def main() -> None:
     norm = tiers.CondNormalization.from_training(raw[:n_fit], cond_raw[:n_fit])
     c_all = norm.cond(cond_raw)
     u_fit = torch.from_numpy(np.array(raw[:n_fit], dtype=np.float32)).to(device)
-    u_val = torch.from_numpy(np.array(raw[n_fit:], dtype=np.float32)).to(device)
+    val_end = raw.shape[0] if args.max_steps is None else n_fit + 8  # smoke: 8 validation trajectories
+    u_val = torch.from_numpy(np.array(raw[n_fit:val_end], dtype=np.float32)).to(device)
     c_fit = torch.tensor(c_all[:n_fit], dtype=torch.float32, device=device)
-    c_val = torch.tensor(c_all[n_fit:], dtype=torch.float32, device=device)
+    c_val = torch.tensor(c_all[n_fit:val_end], dtype=torch.float32, device=device)
     peak = tiers.PEAK_LR[args.tier]
+    labels = tiers.wang_labels(u_fit, args.seed, norm.state_sd) if args.tier == "E1W" else None
     version = code_version()
     settings = {
         "decision": "A18",
@@ -123,6 +125,8 @@ def main() -> None:
             "E1": "FNO-1D width 64, modes 16, 4 layers, FiLM",
             "E3": "FNO-1D width 64, modes 16, 4 layers, FiLM; unroll m=10 after 10% one-step",
             "E2": "U-Net (32, 64, 96) x 2 blocks, GroupNorm, GELU, circular, FiLM; pushforward K=3",
+            "E1D": "B10 E1-dropout: E1 with dropout p=0.1 on latent channels before each spectral block",
+            "E1W": "B15 E1-Wang: E1 trained on labels + N(0, (0.05 state_sd)^2), fixed draw",
         }[args.tier],
         "optimizer": {"name": "AdamW", "betas": tiers.BETAS, "weight_decay": tiers.WEIGHT_DECAY},
         "lr": {"peak": peak, "floor": tiers.FLOOR_LR, "warmup": tiers.WARMUP, "schedule": "cosine"},
@@ -185,6 +189,7 @@ def main() -> None:
             seed=args.seed,
             peak_lr=peak,
             stop=stop,
+            labels=labels,
         )
         if stop_requested:
             checkpoint(epoch)

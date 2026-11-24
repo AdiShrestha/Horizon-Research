@@ -22,7 +22,9 @@ from trajcp.emulators import tiers
 GATE, STEPS, MARKS = 1e-5, 200, (1, 50, 200)
 
 
-def losses(task: str, tier: str, data: Path, device: torch.device, n: int = 64) -> list[float]:
+def losses(
+    task: str, tier: str, data: Path, device: torch.device, n: int = 64, steps: int = STEPS
+) -> list[float]:
     spec = tiers.TASKS[task]
     raw = np.load(data / "train.npy", mmap_mode="r")
     meta = pl.read_parquet(data / "train_meta.parquet").sort("index")
@@ -38,7 +40,7 @@ def losses(task: str, tier: str, data: Path, device: torch.device, n: int = 64) 
     tiers.train_epoch(
         tier, model, opt, u, c, norm, epoch=epoch, total_epochs=500, seed=0,
         peak_lr=tiers.PEAK_LR[tier], on_step=lambda i, v: out.append(float(v)),
-        stop=lambda: len(out) >= STEPS,
+        stop=lambda: len(out) >= steps,
     )
     return out
 
@@ -49,13 +51,14 @@ def main() -> None:
     parser.add_argument("--data-root", type=Path, required=True)
     parser.add_argument("--tasks", nargs="+", default=["p2", "p1", "p3"])
     parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument("--steps", type=int, default=STEPS, help="smoke tests only")
     args = parser.parse_args()
     target = dev.configure(args.device)
     results = []
     for task in args.tasks:
         for tier in tiers.TIERS:
-            cpu = losses(task, tier, args.data_root / task, torch.device("cpu"))
-            other = losses(task, tier, args.data_root / task, target)
+            cpu = losses(task, tier, args.data_root / task, torch.device("cpu"), steps=args.steps)
+            other = losses(task, tier, args.data_root / task, target, steps=args.steps)
             rel = {
                 str(m): abs(other[m - 1] - cpu[m - 1]) / abs(cpu[m - 1])
                 for m in MARKS

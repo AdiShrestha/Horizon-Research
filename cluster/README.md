@@ -13,10 +13,11 @@ their hashes, and a job graph that runs unattended. Nothing in it touches the co
 | A07 budget runs | 6 | yes | E1 seed 0 at 500 and 1,000 epochs, per task, in parallel |
 | gate | 3 | no | A07 15% rule → `emulators/<task>/budget.json` |
 | training | 42 | yes | E1 seeds 1–4, E2 and E3 seeds 0–4, per task, at the gated budget |
+| auxiliary (B10, B15) | 5 | yes | E1-dropout on P1–P3, E1-Wang on P2 and P3, seed 0, gated budget |
 | Stage 1 | 45 | yes | DEV pool (1,500 trajectories): W0 and default W3 statistics; fields for seed 0 of every tier; W3 ablation variants for P2 E1 seed 0 |
 | W3 cost | 1 | yes, exclusive | G1(iii) on P2 E1 seed 0: median of 7 paired W3 / rollout ratios |
 
-99 jobs. Each is idempotent and resumable: training checkpoints every 10 epochs and on SIGTERM;
+104 jobs. Each is idempotent and resumable: training checkpoints every 10 epochs and on SIGTERM;
 a finished job is never rerun. All runs use float32 with TF32 disabled, deterministic algorithms and
 no autocast or compile; every run records the GPU, driver, CUDA, cuDNN and node.
 

@@ -75,6 +75,11 @@ def graph(smoke: bool) -> dict[str, Job]:
                 add(Job(f"stage1-{task}-{tier.lower()}-s{seed}", "stage1", [trained],
                         {"task": task, "tier": tier, "seed": seed, "fields": seed == 0,
                          "variants": task == "p2" and tier == "E1" and seed == 0}))
+        # Tier B auxiliary emulators (brief §8.4): B10 E1-dropout on every 1D task, B15 E1-Wang on P2 and
+        # P3; seed 0, the gated budget. Their baseline Stage 1 passes come with package 2.
+        for tier in ("E1D",) + (("E1W",) if task in ("p2", "p3") else ()):
+            add(Job(f"train-{task}-{tier.lower()}-s0", "train", [f"gate-{task}"],
+                    {"task": task, "tier": tier, "seed": 0, "name": f"{tier.lower()}_seed0"}))
     add(Job("w3cost-p2", "w3cost", ["stage1-p2-e1-s0"], {"task": "p2"}))
     return jobs
 
@@ -114,8 +119,9 @@ def command(work: Work, job: Job, device: str) -> list[str]:
         return python() + [str(ROOT / "cluster" / "verify_bundle.py"), "--data-root", str(work.data),
                            "--out", str(work.root / "checks" / "verify.json")]
     if job.kind == "devcheck":
-        return python() + [str(ROOT / "scripts" / "10_device_check.py"), "--device", device,
-                           "--data-root", str(work.data), "--out", str(work.root / "checks" / "device_check.json")]
+        cmd = python() + [str(ROOT / "scripts" / "10_device_check.py"), "--device", device,
+                          "--data-root", str(work.data), "--out", str(work.root / "checks" / "device_check.json")]
+        return cmd + (["--steps", "3"] if work.smoke else [])
     if job.kind == "train":
         task = str(p["task"])
         cmd = python() + [str(ROOT / "scripts" / "02_train.py"), "--task", task, "--tier", str(p["tier"]),

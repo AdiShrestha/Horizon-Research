@@ -92,6 +92,7 @@ class FNO(nn.Module):
         layers: int = 4,
         projection: int = 128,
         cond_dim: int = 0,
+        dropout: float = 0.0,
     ) -> None:
         super().__init__()
         if dim not in (1, 2):
@@ -114,6 +115,9 @@ class FNO(nn.Module):
         for film in self.film:
             nn.init.zeros_(film.weight)
             nn.init.zeros_(film.bias)
+        # B10 (E1-dropout): dropout on the latent channels before each spectral aggregation;
+        # no parameters, so dropout = 0 leaves initialization and outputs unchanged
+        self.dropout = nn.Dropout(dropout) if dropout > 0 else None
 
     def forward(self, x: torch.Tensor, cond: torch.Tensor | None = None) -> torch.Tensor:
         if (cond is None) != (len(self.film) == 0):
@@ -123,6 +127,8 @@ class FNO(nn.Module):
         last = len(self.spectral) - 1
         blocks = zip(self.spectral, self.pointwise, strict=True)
         for i, (spectral, pointwise) in enumerate(blocks):
+            if self.dropout is not None:
+                h = self.dropout(h)
             h = spectral(h) + pointwise(h)
             if cond is not None:
                 gamma, beta = self.film[i](cond).chunk(2, dim=1)

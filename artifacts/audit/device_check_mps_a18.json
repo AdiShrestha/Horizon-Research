@@ -1,0 +1,99 @@
+{
+  "rule": "step-1 relative loss difference < 1e-05 (A06/A18)",
+  "hardware": {
+    "device": "mps",
+    "torch": "2.15.0",
+    "python": "3.12.8",
+    "platform": "macOS-27.2.1-arm64-arm-64bit",
+    "processor": "arm"
+  },
+  "command": "scripts/10_device_check.py --device mps --data-root artifacts/data --tasks p2 p1 p3 --out artifacts/audit/device_check_mps_a18.json",
+  "results": [
+    {
+      "task": "p2",
+      "tier": "E1",
+      "relative_loss_difference": {
+        "1": 0.0,
+        "50": 9.696950890761909e-08,
+        "200": 6.922393907205557e-06
+      },
+      "pass": true
+    },
+    {
+      "task": "p2",
+      "tier": "E2",
+      "relative_loss_difference": {
+        "1": 3.2861579796350216e-06,
+        "50": 0.0015942014175744966
+      },
+      "pass": true
+    },
+    {
+      "task": "p2",
+      "tier": "E3",
+      "relative_loss_difference": {
+        "1": 1.1721173444181252e-07
+      },
+      "pass": true
+    },
+    {
+      "task": "p1",
+      "tier": "E1",
+      "relative_loss_difference": {
+        "1": 1.1912373060263623e-07,
+        "50": 1.0326973673136205e-07,
+        "200": 9.63210621805132e-06
+      },
+      "pass": true
+    },
+    {
+      "task": "p1",
+      "tier": "E2",
+      "relative_loss_difference": {
+        "1": 3.5651025680008813e-06,
+        "50": 0.0017313734687844891,
+        "200": 0.05616858141616679
+      },
+      "pass": true
+    },
+    {
+      "task": "p1",
+      "tier": "E3",
+      "relative_loss_difference": {
+        "1": 0.0,
+        "50": 3.429060175801318e-05
+      },
+      "pass": true
+    },
+    {
+      "task": "p3",
+      "tier": "E1",
+      "relative_loss_difference": {
+        "1": 1.1840438721407857e-07,
+        "50": 6.503820962296244e-08,
+        "200": 6.029316466039151e-08
+      },
+      "pass": true
+    },
+    {
+      "task": "p3",
+      "tier": "E2",
+      "relative_loss_difference": {
+        "1": 4.147034490194683e-06,
+        "50": 0.0001286699643128905,
+        "200": 0.013994589531148105
+      },
+      "pass": true
+    },
+    {
+      "task": "p3",
+      "tier": "E3",
+      "relative_loss_difference": {
+        "1": 1.1890100278727731e-07,
+        "50": 0.0
+      },
+      "pass": true
+    }
+  ],
+  "pass": true
+}
